@@ -1,0 +1,181 @@
+[
+    {
+        "_id": {
+            "$oid": "641b0aa2b45a9a1d7b0ce25a"
+        },
+        "account_identification": "NL69INGB0123456789EUR",
+        "available_balance": {
+            "amount": {
+                "amount": "564.35",
+                "currency": "EUR"
+            },
+            "date": "2014-02-20",
+            "status": "C"
+        },
+        "final_closing_balance": {
+            "amount": {
+                "amount": "564.35",
+                "currency": "EUR"
+            },
+            "date": "2014-02-20",
+            "status": "C"
+        },
+        "final_opening_balance": {
+            "amount": {
+                "amount": "662.23",
+                "currency": "EUR"
+            },
+            "date": "2014-02-19",
+            "status": "C"
+        },
+        "forward_available_balance": {
+            "amount": {
+                "amount": "564.35",
+                "currency": "EUR"
+            },
+            "date": "2014-02-24",
+            "status": "C"
+        },
+        "sequence_number": null,
+        "statement_number": "00000",
+        "transaction_reference": "P140220000000001",
+        "transactions": [
+            {
+                "amount": {
+                    "amount": "1.56",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001005",
+                "currency": "EUR",
+                "customer_reference": "EREF",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/00100/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NTRF",
+                "status": "C",
+                "transaction_details": "/EREF/EV12341REP1231456T1234//CNTP/NL32INGB0000012345/INGBNL2\nA/ING BANK NV INZAKE WEB///REMI/USTD//EV10001REP1000000T1000/"
+            },
+            {
+                "amount": {
+                    "amount": "-1.57",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001006",
+                "currency": "EUR",
+                "customer_reference": "PREF",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/00200/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NTRF",
+                "status": "D",
+                "transaction_details": "/PREF/M000000003333333//REMI/USTD//TOTAAL 1 VZ/"
+            },
+            {
+                "amount": {
+                    "amount": "1.57",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001007",
+                "currency": "EUR",
+                "customer_reference": "EREF",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/00190/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NRTI",
+                "status": "C",
+                "transaction_details": "/RTRN/MS03//EREF/20120123456789//CNTP/NL32INGB0000012345/INGB\nNL2A/J.Janssen///REMI/USTD//Factuurnr 123456 Klantnr 00123/"
+            },
+            {
+                "amount": {
+                    "amount": "-1.14",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001009",
+                "currency": "EUR",
+                "customer_reference": "EREF",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/01016/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NDDT",
+                "status": "D",
+                "transaction_details": "/EREF/EV123REP123412T1234//MARF/MND-EV01//CSID/NL32ZZZ9999999\n91234//CNTP/NL32INGB0000012345/INGBNL2A/ING Bank N.V. inzake WeB/\n//REMI/USTD//EV123REP123412T1234/"
+            },
+            {
+                "amount": {
+                    "amount": "1.45",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001008",
+                "currency": "EUR",
+                "customer_reference": "PREF",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/01000/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NDDT",
+                "status": "C",
+                "transaction_details": "/PREF/M000000001111111//CSID/NL32ZZZ999999991234//REMI/USTD//\nTOTAAL       1 POSTEN/"
+            },
+            {
+                "amount": {
+                    "amount": "-12.75",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001010",
+                "currency": "EUR",
+                "customer_reference": "EREF",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/01315/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NRTI",
+                "status": "D",
+                "transaction_details": "/RTRN/MS03//EREF/20120501P0123478//MARF/MND-120123//CSID/NL32\nZZZ999999991234//CNTP/NL32INGB0000012345/INGBNL2A/J.Janssen///REM\nI/USTD//CONTRIBUTIE FEB 2014/"
+            },
+            {
+                "amount": {
+                    "amount": "32.00",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001011",
+                "currency": "EUR",
+                "customer_reference": "9001123412341234",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/00108/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NTRF",
+                "status": "C",
+                "transaction_details": "/EREF/15814016000676480//CNTP/NL32INGB0000012345/INGBNL2A/J.J\nanssen///REMI/STRD/CUR/9001123412341234/"
+            },
+            {
+                "amount": {
+                    "amount": "-119.00",
+                    "currency": "EUR"
+                },
+                "bank_reference": "00000000001012",
+                "currency": "EUR",
+                "customer_reference": "1070123412341234",
+                "date": "2014-02-20",
+                "entry_date": "2014-02-20",
+                "extra_details": "/TRCD/00108/",
+                "funds_code": null,
+                "guessed_entry_date": "2014-02-20",
+                "id": "NTRF",
+                "status": "D",
+                "transaction_details": "/EREF/15614016000384600//CNTP/NL32INGB0000012345/INGBNL2A/ING\nBANK NV///REMI/STRD/CUR/1070123412341234/\n/SUM/4/4/134,46/36,58/\n-}"
+            }
+        ]
+    }
+]

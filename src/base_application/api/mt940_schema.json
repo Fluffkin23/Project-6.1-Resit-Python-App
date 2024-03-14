@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "_id": {
+      "type": "object",
+      "properties": {
+        "$oid": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "$oid"
+      ]
+    },
+    "account_identification": {
+      "type": "string"
+    },
+    "available_balance": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency"
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "date",
+        "status"
+      ]
+    },
+    "final_closing_balance": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency"
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "date",
+        "status"
+      ]
+    },
+    "final_opening_balance": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency"
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "date",
+        "status"
+      ]
+    },
+    "forward_available_balance": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency"
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "date",
+        "status"
+      ]
+    },
+    "sequence_number": {
+      "type": "null"
+    },
+    "statement_number": {
+      "type": "string"
+    },
+    "transaction_reference": {
+      "type": "string"
+    },
+    "transactions": {
+      "type": "array",
+      "items": {}
+    }
+  },
+  "required": [
+    "_id",
+    "account_identification",
+    "available_balance",
+    "final_closing_balance",
+    "final_opening_balance",
+    "forward_available_balance",
+    "sequence_number",
+    "statement_number",
+    "transaction_reference",
+    "transactions"
+  ]
+}

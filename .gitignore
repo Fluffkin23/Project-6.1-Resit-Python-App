@@ -1,0 +1,13 @@
+*/vendor
+*/Test
+*composer.phar
+*.idea
+*.env
+*.tex
+*.DS_Store
+*.pdf
+*.yaml
+*.do
+*.latex
+*.Zone:Identifier
+*.vscode

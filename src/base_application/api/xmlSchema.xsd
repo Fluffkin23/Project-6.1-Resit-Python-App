@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="MT940">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Header" type="HeaderType"/>
+                <xs:element name="Transactions" type="TransactionsType"/>
+                <xs:element name="Footer" type="FooterType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="HeaderType">
+        <xs:sequence>
+            <xs:element name="StatementNumber" type="xs:string"/>
+            <xs:element name="AccountNumber" type="xs:string"/>
+            <xs:element name="Currency" type="xs:string"/>
+            <xs:element name="OpeningBalance" type="xs:decimal"/>
+            <xs:element name="ClosingBalance" type="xs:decimal"/>
+            <xs:element name="StartDate" type="xs:date"/>
+            <xs:element name="EndDate" type="xs:date"/>
+            <xs:element name="GenerationDate" type="xs:dateTime"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="TransactionsType">
+        <xs:sequence>
+            <xs:element name="Transaction" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="TransactionReference" type="xs:string"/>
+                        <xs:element name="TransactionDescription" type="xs:string"/>
+                        <xs:element name="Amount" type="xs:decimal"/>
+                        <xs:element name="TransactionDate" type="xs:date"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FooterType">
+        <xs:sequence>
+            <xs:element name="TotalTransactions" type="xs:integer"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

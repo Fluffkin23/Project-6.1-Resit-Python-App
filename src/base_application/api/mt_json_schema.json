@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "transactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transaction_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "object"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "transaction_type": {
+            "type": "string",
+            "enum": ["C", "D"]
+          },
+          "reference": {
+            "type": "string"
+          },
+          "account_number": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["transactions"],
+  "additionalProperties": true
+}
