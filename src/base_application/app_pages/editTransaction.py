@@ -191,15 +191,15 @@ def edit_transaction_page_admin(transaction_id):
     textbox_description.insert(INSERT, str(description_trans))
 
     # Category/Member Menu and Label
-    label_category = tk.Label(frame_left, text="Category", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
+    label_category = tk.Label(frame_left, text="Cost center", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
     label_category.place(x=10, y=490, width=190, height=50)
     optionmenu_category = tk.OptionMenu(frame_left, value_category, *options_list_category)
     optionmenu_category.place(x=50, y=540, height=30, width=500)
 
-    label_member = tk.Label(frame_left, text="Member", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_member.place(x=10, y=570, width=190, height=50)
-    optionmenu_member = tk.OptionMenu(frame_left, value_member, *options_list_members)
-    optionmenu_member.place(x=50, y=620, height=30, width=500)
+    # label_member = tk.Label(frame_left, text="Member", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
+    # label_member.place(x=10, y=570, width=190, height=50)
+    # optionmenu_member = tk.OptionMenu(frame_left, value_member, *options_list_members)
+    # optionmenu_member.place(x=50, y=620, height=30, width=500)
 
     #Save Button
     button_save = tk.Button(frame_left, text="Save", font=("Inter", 20), bg="#F0AFAF", fg="black", bd=0, highlightthickness=0, activebackground="#B3B3B3", command=lambda: get_input_save(value_category.get(), value_member.get(), textbox_description.get(1.0, 'end-1c')))

@@ -5,6 +5,8 @@ import tkinter as tk
 import xml
 from tkinter import ttk, messagebox
 from tkinter import filedialog
+
+from src.base_application.api import parser
 from src.base_application.member.manageMembers import manage_members
 from src.base_application.app_pages.fileUpload import main
 import requests
@@ -31,6 +33,7 @@ def adminPanel():
     response = requests.get(api_server_ip + "/api/getFile")
     if len(response.json()) != 0:
         balance = response.json()[0][4]
+
 
     # --------------------------------------------------- Functions -------------------------------------------------- #
     def manage_members_button():
@@ -132,6 +135,28 @@ def adminPanel():
                 file.write(xml_root.encode('utf-8'))
         root.destroy()
 
+    def insert_category():
+        # Get the category name from the Entry widget
+        category_name = entry_category_name.get()
+
+        # Define the URL of the API endpoint
+        url = api_server_ip + "/api/insertCategory"
+
+        # Prepare the data payload as a dictionary
+        data = {'name': category_name}
+
+        # Send a POST request to the Flask API
+        response = requests.post(url, data=data)
+
+        # Process the response
+        if response.status_code == 201:
+            messagebox.showinfo("Success", "Category added successfully.")
+            # Optionally clear the entry widget after successful insert
+            entry_category_name.delete(0, tk.END)
+        else:
+            # Display an error message if something goes wrong
+            messagebox.showerror("Error", "Failed to add category. Server responded with: " + response.text)
+
     # ---------------------------------------------------- Frame 1 --------------------------------------------------- #
     label = tk.Label(frame1, text="Admin Panel", font=("Inter", 24, "normal"), bg="#D9D9D9", fg="black", justify="left")
     label.place(x=20, y=20, width=190, height=50)
@@ -146,16 +171,31 @@ def adminPanel():
                        fg="black", justify="left")
     welcome.place(x=15, y=175, width=190, height=30)
 
+
+    # Category Name Entry Label
+    # label_category_name = tk.Label(frame1, text="Category Name", font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black",
+    #                                justify="left")
+    # label_category_name.place(x=75, y=300, width=180, height=30)  # Adjust y-coordinate as needed
+
+    # Category Name Entry Text Box
+    entry_category_name = tk.Entry(frame1, font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black", justify="left")
+    entry_category_name.place(x=75, y=330, width=180, height=30)  # Adjust y-coordinate as needed
+
+    # Category Insertion Button
+    button_insert_category = tk.Button(frame1, text="Insert Cost Center", font=("Inter", 12, "normal"), bg="#D9D9D9",
+                                       fg="black", justify="left", command=lambda: insert_category())
+    button_insert_category.place(x=300, y=330, width=180, height=30)  # Adjust y-coordinate as needed
+
     button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left", command=lambda: logout_button())
     button.place(x=450, y=175, height=30)
 
-    manageMembers = tk.Button(frame1, text="Manage Memberships", font=("Inter", 12, "normal"),
-                              bg="#D9D9D9", fg="black", justify="left", command= lambda: manage_members_button())
-    manageMembers.place(x=75, y=300, width=180, height=30)
-
-    upload = tk.Button(frame1, text="Upload MT940 File", font=("Inter", 12, "normal"),
-                       bg="#D9D9D9", fg="black", justify="left", command=lambda: upload_button_click())
-    upload.place(x=300, y=300, width=180, height=30)
+    # manageMembers = tk.Button(frame1, text="Manage Memberships", font=("Inter", 12, "normal"),
+    #                           bg="#D9D9D9", fg="black", justify="left", command= lambda: manage_members_button())
+    # manageMembers.place(x=75, y=300, width=180, height=30)
+    #
+    # upload = tk.Button(frame1, text="Upload MT940 File", font=("Inter", 12, "normal"),
+    #                    bg="#D9D9D9", fg="black", justify="left", command=lambda: upload_button_click())
+    # upload.place(x=300, y=300, width=180, height=30)
 
     searchBar = tk.Entry(frame1, font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black", justify="left")
     searchBar.place(x=75, y=400, width=180, height=30)
@@ -171,7 +211,7 @@ def adminPanel():
     balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_label.place(x=35, y=600, width=160, height=24)
 
-    balance_number = tk.Label(frame1, text=balance, font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_number = tk.Label(frame1, text = balance ,font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_number.place(x=210, y=600, width=160, height=24)
 
     search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
@@ -273,6 +313,15 @@ def adminPanel():
             table_inp.insert("", "end", values=result)
         # Remove the sum per search label if table is updated
         widget.config(text="")
+        refresh_balance_label()
+
+    def refresh_balance_label():
+        # Call the function to update the balance from FileWatcher
+        new_balance = parser.FileWatcher.update_balance()
+        if new_balance is not None:
+            balance_number.configure(text=str(new_balance))
+        else:
+            balance_number.config(text="Failed to update")
 
 
     # Bind the on_closing function to the window close event
