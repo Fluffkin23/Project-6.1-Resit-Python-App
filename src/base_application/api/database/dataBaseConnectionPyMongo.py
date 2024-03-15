@@ -6,13 +6,13 @@ from flask import Flask
 def get_database():
     # Provide the mongodb atlas url to connect python to mongodb using pymongo. Use your own connection string
     # CONNECTION_STRING = "mongodb+srv://IT2C:ZHty3DkM0tIozYks@it2csportsaccounting.byzfgpv.mongodb.net/?retryWrites=true&w=majority"
-    CONNECTION_STRING = "mongodb+srv://admin:55TPmsPXgRraJuvE@cluster0.lxrxapc.mongodb.net/?retryWrites=true&w=majority"
+    CONNECTION_STRING = "mongodb+srv://user:parola@it2k.6xpkzvp.mongodb.net/?retryWrites=true&w=majority&appName=IT2K"
 
     # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
     client = MongoClient(CONNECTION_STRING)
 
     # Create the database for our example (we will use the same database throughout the tutorial
-    return client['IT2CSportsAccounting']
+    return client['IT2KSportsAccounting']
 
 
 def get_collection():
@@ -29,8 +29,7 @@ def get_flask_app():
 def get_connection_postgre():
     # Establishing the connection
     conn = psycopg2.connect(
-        database="postgres", user='adminit2c@project6-1-it2c', password='55TPmsPXgRraJuvE',
-        host='project6-1-it2c.postgres.database.azure.com', port='5432'
+        database="Quintor", user='postgres', password='parola', host='localhost', port='5432'
     )
     print(conn)
     return conn
