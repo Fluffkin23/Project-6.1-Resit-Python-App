@@ -10,6 +10,7 @@ import psycopg2
 from pywin.framework.editor import frame
 
 from src.base_application.api import parser
+from src.base_application.api.parser import FileWatcher
 from src.base_application.member.manageMembers import manage_members
 from src.base_application.app_pages.fileUpload import main
 import requests
@@ -350,6 +351,11 @@ def adminPanel():
     search_summary_num = tk.Label(frame1, text="", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     search_summary_num.pack_forget()
 
+    addCashTransactionButton = tk.Button(frame1, text="Add Cash Transaction", font=("Inter", 12, "normal"),
+                                         bg="#D9D9D9", fg="black", justify="left",
+                                         command=open_add_cash_transaction_window)
+    addCashTransactionButton.place(x=75, y=350, width=180, height=30)
+
     # ---------------------------------------------------- Frame 2 --------------------------------------------------- #
     table = ttk.Treeview(frame2, columns=("ID", "Date", "Details", "Description", "Ref", "Amount"),
                          show="headings", style="Custom.Treeview")
@@ -446,12 +452,20 @@ def adminPanel():
         refresh_balance_label()
 
     def refresh_balance_label():
-        # Call the function to update the balance from FileWatcher
-        new_balance = parser.FileWatcher.update_balance()
+        # Replace "path/to/watch/directory" with the actual directory path you intend to watch
+        watch_directory = "src/base_application/api/parser.py"
+        file_watcher = FileWatcher(watch_directory)  # Provide the required argument
+
+        new_balance = file_watcher.update_balance()
+
         if new_balance is not None:
             balance_number.configure(text=str(new_balance))
         else:
             balance_number.config(text="Failed to update")
+
+    # Example button to refresh the balance
+    refresh_button = tk.Button(window, text="Refresh Balance", command=refresh_balance_label)
+    refresh_button.pack()
 
 
     # Bind the on_closing function to the window close event
