@@ -8,6 +8,7 @@ from tkinter import filedialog
 
 import psycopg2
 from pywin.framework.editor import frame
+from self import self
 
 from src.base_application.api import parser
 from src.base_application.api.parser import FileWatcher
@@ -327,20 +328,12 @@ def adminPanel():
         refresh_balance_label()
 
     def refresh_balance_label():
-        # Replace "path/to/watch/directory" with the actual directory path you intend to watch
-        watch_directory = "src/base_application/api/parser.py"
-        file_watcher = FileWatcher(watch_directory)  # Provide the required argument
-
-        new_balance = file_watcher.update_balance()
-
+        # Call the function to update the balance from FileWatcher
+        new_balance = parser.FileWatcher.update_balance(FileWatcher.update_balance(self))
         if new_balance is not None:
             balance_number.configure(text=str(new_balance))
         else:
             balance_number.config(text="Failed to update")
-
-    # Example button to refresh the balance
-    refresh_button = tk.Button(window, text="Refresh Balance", command=refresh_balance_label)
-    refresh_button.pack()
 
 
     # Bind the on_closing function to the window close event
