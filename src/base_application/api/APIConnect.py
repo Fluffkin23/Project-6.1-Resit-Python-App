@@ -31,7 +31,8 @@ def index():
             "insertMemberSQL": "/api/insertMemberSQL/<name>/<email>",
             "updateTransactionSQL": "/api/updateTransactionSQL/<transaction_id>",
             "deleteMemberSQL": "/api/deleteMember",
-            "getAssociationSQL": "/api/getAssociation"
+            "getAssociationSQL": "/api/getAssociation",
+            "getTransactionCountREST": "/api/transactions/count"
         }
     }
     return make_response(jsonify(answer), 200)
@@ -48,6 +49,35 @@ def test():
 def get_transactions_count():
     output = {"transactionsCount": transactions_collection.count_documents({})}
     return output
+
+@app.route("/api/transactions/count", methods=["GET"])
+def get_transactions():
+    # Query the transactions collection to count the documents (transactions) and store the count.
+    count = transactions_collection.count_documents({})
+
+    # Create a response object with the count wrapped in a JSON format.
+    response = jsonify({"transactionsCount": count})
+
+    # Set the HTTP status code for the response to 200, indicating success.
+    response.status_code = 200
+
+    # Security header: Specifies the Content Security Policy, restricting resources to the same origin for added security against XSS attacks.
+    response.headers['Content-Security-Policy'] = "default-src 'self';"
+
+    # Security header: Prevents MIME type sniffing by browsers, reducing exposure to drive-by download attacks.
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+
+    # Security header: Prevents the webpage from being framed from different origins, mitigating clickjacking attacks.
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+
+    # Security header: Enables XSS filtering. If detection occurs, the browser will block the page.
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+
+    # Security header: Enforces the use of HTTPS over a specified period, including subdomains, reducing the risk of man-in-the-middle attacks.
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
+    # Return the modified response object with the transaction count and the added security headers.
+    return response
 
 
 @app.route("/api/downloadJSON", methods=["GET"])
