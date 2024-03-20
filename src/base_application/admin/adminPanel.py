@@ -5,13 +5,65 @@ import tkinter as tk
 import xml
 from tkinter import ttk, messagebox
 from tkinter import filedialog
-
+from src.base_application.app_pages.split_page import create_split_page
+# from split_page import create_split_page
 from src.base_application.api import parser
 from src.base_application.member.manageMembers import manage_members
 from src.base_application.app_pages.fileUpload import main
 import requests
 from src.base_application import api_server_ip
+from src.base_application.api.database.postGreSQL_database import get_transaction_details
 import xml.etree.ElementTree as ET
+selected_row = None
+
+
+def open_split_window(transaction_id):
+    split_window = tk.Toplevel()
+    split_window.title("Split Transaction")
+
+    # Label and entry for the number of ways to split the transaction
+    tk.Label(split_window, text="Number of ways to split:").pack()
+    split_count_entry = tk.Entry(split_window)
+    split_count_entry.pack()
+
+    # When the button is pressed, retrieve the value and proceed with the split logic
+    confirm_button = tk.Button(split_window, text="Confirm",
+                               command=lambda: confirm_split(transaction_id, split_count_entry.get()))
+    confirm_button.pack()
+
+    # Define confirm_split inside open_split_window for now, you can move it out later if needed
+    def confirm_split(transaction_id, split_count):
+        try:
+            # Convert the entered split count to an integer
+            num_splits = int(split_count)
+            # You would have additional logic here to handle the splitting
+            # For now, let's just print something to the console
+            print(f"Transaction {transaction_id} will be split into {num_splits} parts.")
+            # Close the split window when done
+            split_window.destroy()
+        except ValueError:
+            # Handle the case where split_count is not an integer
+            messagebox.showerror("Error", "Please enter a valid number.")
+def split_button_click():
+    global selected_row
+    if selected_row is None:
+        messagebox.showwarning("Selection Needed", "Please select a transaction to split.")
+        return
+        # You need to retrieve the transaction details that you want to pass to the split window
+    transaction_details = get_transaction_details(selected_row)  # Replace with actual details
+
+    # Call the function to create and show the split page
+    create_split_page(selected_row, transaction_details)
+
+    if transaction_details:
+        # If details are found, pass them to the split page creator
+        create_split_page(selected_row, transaction_details)
+    else:
+        messagebox.showerror("Error", "Failed to retrieve transaction details.")
+
+
+
+
 
 
 def adminPanel():
@@ -33,7 +85,6 @@ def adminPanel():
     response = requests.get(api_server_ip + "/api/getFile")
     if len(response.json()) != 0:
         balance = response.json()[0][4]
-
 
     # --------------------------------------------------- Functions -------------------------------------------------- #
     def manage_members_button():
@@ -84,6 +135,21 @@ def adminPanel():
         from src.base_application.app_pages.transactionDetails import transaction_details
         transaction_details(selected_row)
 
+        # def split_button_click():
+        #     global selected_row
+        #     if selected_row is None:
+        #         messagebox.showwarning("Selection Needed", "Please select a transaction to split.")
+        #         return
+        #
+        #     # Proceed with opening the new window for split details
+        #     from src.base_application.app_pages.transactionDetails import transaction_details
+        #     transaction_details(selected_row)
+        #     # open_split_window(selected_row)
+
+
+
+
+
     def retrieveDB_keyword_search(keyword):
         response = requests.get(api_server_ip + "/api/searchKeyword/" + str(keyword))
         if len(response.json()) == 0:
@@ -99,7 +165,6 @@ def adminPanel():
         # Make a request to download the JSON data
         response = requests.get(api_server_ip + "/api/downloadJSON")
         json_data = response.json()
-
 
         # Format and indent the JSON data
         formatted_json = json.dumps(json_data, indent=4)
@@ -171,7 +236,6 @@ def adminPanel():
                        fg="black", justify="left")
     welcome.place(x=15, y=175, width=190, height=30)
 
-
     # Category Name Entry Label
     # label_category_name = tk.Label(frame1, text="Category Name", font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black",
     #                                justify="left")
@@ -186,7 +250,8 @@ def adminPanel():
                                        fg="black", justify="left", command=lambda: insert_category())
     button_insert_category.place(x=300, y=330, width=180, height=30)  # Adjust y-coordinate as needed
 
-    button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left", command=lambda: logout_button())
+    button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left",
+                       command=lambda: logout_button())
     button.place(x=450, y=175, height=30)
 
     # manageMembers = tk.Button(frame1, text="Manage Memberships", font=("Inter", 12, "normal"),
@@ -208,13 +273,15 @@ def adminPanel():
                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_xml_button_click())
     downloadXMLFile.place(x=300, y=500, width=250, height=30)
 
-    balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000",
+                             justify="left")
     balance_label.place(x=35, y=600, width=160, height=24)
 
-    balance_number = tk.Label(frame1, text = balance ,font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_number = tk.Label(frame1, text=balance, font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_number.place(x=210, y=600, width=160, height=24)
 
-    search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9",
+                                    fg="#000000", justify="left")
     search_balance_label.place(x=35, y=700, width=240, height=24)
 
     search_summary_num = tk.Label(frame1, text="", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
@@ -260,7 +327,7 @@ def adminPanel():
     # Pack the table into the frame and center it horizontally
     table.pack(fill="both", expand=False)  # Fill the frame with the table
     table.place(x=15, y=100)  # Place the table 15 pixels from the left and 100 pixels from the top
-    table.bind("<ButtonRelease-1>", on_click_table_row, "+") # Bind row selection
+    table.bind("<ButtonRelease-1>", on_click_table_row, "+")  # Bind row selection
     frame2.pack_propagate(False)  # Prevent the frame from resizing to fit the table
 
     edit_button = ttk.Button(frame2, text="Edit", command=lambda: edit_button_click())
@@ -270,11 +337,17 @@ def adminPanel():
     details_button.place(x=485, y=35, width=100, height=30)
 
     search = tk.Button(frame1, text="Search Keyword", font=("Inter", 12, "normal"),
-                       bg="#D9D9D9", fg="black", justify="left", command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
+                       bg="#D9D9D9", fg="black", justify="left",
+                       command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
     search.place(x=300, y=400, width=180, height=30)
 
     update_button = ttk.Button(frame2, text="Update", command=lambda: update_button_click(table, search_summary_num))
     update_button.place(x=235, y=35, width=100, height=30)
+
+    # Split_button
+
+    split_button = ttk.Button(frame2, text="Split", command=lambda: split_button_click())
+    split_button.place(x=120, y=35, width=100, height=30)  # Adjust the x coordinate as needed
 
     def on_closing():
         window.destroy()
@@ -322,7 +395,6 @@ def adminPanel():
             balance_number.configure(text=str(new_balance))
         else:
             balance_number.config(text="Failed to update")
-
 
     # Bind the on_closing function to the window close event
     window.protocol("WM_DELETE_WINDOW", on_closing)

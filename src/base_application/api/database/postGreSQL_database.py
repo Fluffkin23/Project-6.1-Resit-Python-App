@@ -3,8 +3,17 @@ import re
 
 # Establishing the connection
 conn = psycopg2.connect(
-    database="Quintor", user='postgres', password='password', host='localhost', port='5432'
+    database="Quintor", user='postgres', password='12345', host='localhost', port='5432'
 )
+
+def get_transaction_details(transaction_id):
+    # Use your actual database credentials and connection details
+    with psycopg2.connect(database="Quintor", user='postgres', password='12345', host='localhost', port='5432') as conn:
+        with conn.cursor() as cursor:
+            query = "SELECT * FROM Transactions WHERE transactionID = %s;"
+            cursor.execute(query, (transaction_id,))
+            transaction_details = cursor.fetchone()  # fetchone() returns a single record or None
+            return transaction_details
 
 
 def table_create():
