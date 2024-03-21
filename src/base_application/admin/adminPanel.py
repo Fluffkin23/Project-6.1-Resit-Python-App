@@ -12,6 +12,7 @@ from self import self
 
 from src.base_application.api import parser
 from src.base_application.api.parser import FileWatcher
+from src.base_application.app_pages.addCash import open_add_cash_window
 from src.base_application.app_pages.cashAddOn import open_add_cash_transaction_window
 from src.base_application.member.manageMembers import manage_members
 from src.base_application.app_pages.fileUpload import main
@@ -284,6 +285,11 @@ def adminPanel():
     search = tk.Button(frame1, text="Search Keyword", font=("Inter", 12, "normal"),
                        bg="#D9D9D9", fg="black", justify="left", command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
     search.place(x=300, y=400, width=180, height=30)
+
+    addCashButton = tk.Button(frame1, text="Add Cash", font=("Inter", 12, "normal"),
+                                         bg="#D9D9D9", fg="black", justify="left",
+                                         command=open_add_cash_window)
+    addCashButton.place(x=300, y=450, width=180, height=30)
 
     update_button = ttk.Button(frame2, text="Update", command=lambda: update_button_click(table, search_summary_num))
     update_button.place(x=235, y=35, width=100, height=30)
