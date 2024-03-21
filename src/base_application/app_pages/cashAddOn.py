@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import psycopg2
-def is_valid_input(amount, currency, transaction_date):
-    # Example validation: ensure no field is empty and amount is numeric
-    if not all([amount, currency, transaction_date]):
+def is_valid_input(amount, currency, transaction_date, description):
+    # Ensure no field is empty and amount is numeric
+    if not all([amount, currency, transaction_date, description]):
         return False, "All fields are required."
 
     try:
@@ -12,9 +12,7 @@ def is_valid_input(amount, currency, transaction_date):
         return False, "Amount must be numeric."
 
     # Additional validation can be added here as necessary
-
     return True, ""
-
 
 def open_add_cash_transaction_window():
     add_window = tk.Toplevel()
@@ -36,10 +34,13 @@ def open_add_cash_transaction_window():
     currency_entry.grid(row=1, column=1, padx=10, pady=10, sticky="e")
 
     # Transaction Date Entry
-    tk.Label(frame, text="Transaction Date (YYYY-MM-DD):", bg="#D9D9D9").grid(row=2, column=0, padx=10, pady=10,
-                                                                              sticky="w")
+    tk.Label(frame, text="Transaction Date (YYYY-MM-DD):", bg="#D9D9D9").grid(row=2, column=0, padx=10, pady=10, sticky="w")
     date_entry = tk.Entry(frame, width=40)
     date_entry.grid(row=2, column=1, padx=10, pady=10, sticky="e")
+
+    tk.Label(frame, text="Description:", bg="#D9D9D9").grid(row=3, column=0, padx=10, pady=10, sticky="w")
+    description_entry = tk.Entry(frame, width=40)
+    description_entry.grid(row=3, column=1, padx=10, pady=10, sticky="e")
 
     # Save Transaction Function
     def save_transaction():
@@ -47,8 +48,10 @@ def open_add_cash_transaction_window():
         amount = amount_entry.get()
         currency = currency_entry.get()
         transaction_date = date_entry.get()
+        description = description_entry.get()
 
-        is_valid, message = is_valid_input(amount, currency, transaction_date)
+
+        is_valid, message = is_valid_input(amount, currency, transaction_date, description)
         if not is_valid:
             messagebox.showerror("Validation Error", message)
             return
@@ -87,10 +90,10 @@ def open_add_cash_transaction_window():
 
             # Insert SQL command for the Transactions table
             insert_transaction_sql = """
-                INSERT INTO transactions (amount, currency, transaction_date, referenceNumber)
-                VALUES (%s, %s, %s, %s);
-            """
-            cursor.execute(insert_transaction_sql, (amount, currency, transaction_date, latest_reference))
+                           INSERT INTO transactions (amount, currency, transaction_date, description, referenceNumber)
+                           VALUES (%s, %s, %s, %s, %s);
+                       """
+            cursor.execute(insert_transaction_sql, (amount, currency, transaction_date, description, latest_reference))
 
             # Update SQL command for the File table balance
             update_balance_sql = """
@@ -117,7 +120,7 @@ def open_add_cash_transaction_window():
 
     # Submit Button
     submit_btn = tk.Button(frame, text="Save", bg="#D9D9D9", command=save_transaction)
-    submit_btn.grid(row=3, column=0, columnspan=2, pady=20)
+    submit_btn.grid(row=4, column=0, columnspan=2, pady=20)
 
     # Adjust grid column configuration for alignment
     frame.grid_columnconfigure(0, weight=1)
