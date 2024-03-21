@@ -3,8 +3,12 @@ import json
 import xml.dom.minidom
 import tkinter as tk
 import xml
+from datetime import datetime
 from tkinter import ttk, messagebox
 from tkinter import filedialog
+
+from bson import json_util
+from tkcalendar import DateEntry
 
 from src.base_application.api import parser
 from src.base_application.member.manageMembers import manage_members
@@ -96,44 +100,110 @@ def adminPanel():
         return rows_out
 
     def get_json_button_click():
-        # Make a request to download the JSON data
-        response = requests.get(api_server_ip + "/api/downloadJSON")
-        json_data = response.json()
-
-
-        # Format and indent the JSON data
-        formatted_json = json.dumps(json_data, indent=4)
-
-        # Prompt the user to select a file path
         root = tk.Tk()
         root.withdraw()
         root.wm_attributes("-topmost", 1)
-        file_path = filedialog.asksaveasfilename(defaultextension='.json')
 
-        if file_path:
-            # Write the formatted JSON data to the selected file path
-            with open(file_path, 'w') as f:
-                f.write(formatted_json)
+        start_date = start_date_picker.get_date()
+        end_date = end_date_picker.get_date()
 
-        root.destroy()
+        try:
+            response = requests.get(api_server_ip + "/api/getTransactions")
+            response.raise_for_status()  # This will raise an exception for HTTP error codes
+            documents = response.json()
+
+            filtered_documents = []
+            for document in documents:
+                # Initialize a new document with the same structure but with an empty transactions list
+                new_document = document.copy()
+                new_document['transactions'] = []
+
+                # Iterate over each transaction in the current document
+                for transaction in document['transactions']:
+                    # Convert the entry_date string to a datetime object for comparison
+                    transaction_date = datetime.strptime(transaction['entry_date'], "%Y-%m-%d").date()
+                    # Check if the transaction's date is within the selected range
+                    if start_date <= transaction_date <= end_date:
+                        new_document['transactions'].append(transaction)
+
+                # Only add the document to the filtered list if it has at least one transaction in the range
+                if new_document['transactions']:
+                    filtered_documents.append(new_document)
+
+            # Convert the filtered documents to JSON
+            formatted_json = json_util.dumps(filtered_documents, indent=4)
+
+            # Prompt the user to select a file path for saving the JSON
+            file_path = filedialog.asksaveasfilename(defaultextension='.json')
+            if file_path:
+                # Write the formatted JSON to the selected file path
+                with open(file_path, 'w') as f:
+                    f.write(formatted_json)
+                messagebox.showinfo("Success", "Filtered transactions saved to JSON file successfully.")
+
+        except requests.exceptions.HTTPError as http_err:
+            messagebox.showerror("HTTP Error", f"HTTP error occurred: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            messagebox.showerror("Connection Error", f"Connection error occurred: {conn_err}")
+        except requests.exceptions.JSONDecodeError as json_err:
+            messagebox.showerror("JSON Decode Error", f"Error decoding JSON data: {json_err}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+        finally:
+            root.destroy()
 
     def get_xml_button_click():
-        headers = {'Accept': 'application/xml'}
-        xml_data = requests.get(api_server_ip + "/api/downloadXML", headers=headers)
-        # xml_root = ET.fromstring(xml_data.content)
-        xml_root = xml_data.text
+        start_date = start_date_picker.get_date()
+        end_date = end_date_picker.get_date()
 
-        # Prompt the user to select a file path
-        root = tk.Tk()
-        root.withdraw()
-        root.wm_attributes("-topmost", 1)
-        file_path = filedialog.asksaveasfilename(defaultextension='.xml')
+        try:
+            response = requests.get(api_server_ip + "/api/getTransactions")
+            documents = response.json()
 
-        # Write the XML data to the selected file path
-        if file_path:
-            with open(file_path, 'wb') as file:
-                file.write(xml_root.encode('utf-8'))
-        root.destroy()
+            # Root element for XML
+            root = ET.Element("Transactions")
+
+            for document in documents:
+                doc_element = ET.SubElement(root, "Document")
+                # Add document-level fields if needed, for example:
+                # ET.SubElement(doc_element, "TransactionReference").text = document.get("transaction_reference", "")
+
+                # Process only transactions within the given date range
+                for transaction in document['transactions']:
+                    transaction_date = datetime.strptime(transaction['entry_date'], "%Y-%m-%d").date()
+                    if start_date <= transaction_date <= end_date:
+                        trans_element = ET.SubElement(doc_element, "Transaction")
+                        for key, value in transaction.items():
+                            child = ET.SubElement(trans_element, key)
+                            child.text = str(value)
+
+            # Convert ElementTree to string
+            xml_str = ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8')
+
+            # Pretty print XML (optional)
+            xml_pretty = xml.dom.minidom.parseString(xml_str).toprettyxml()
+
+            # Prompt the user to select a file path
+            root = tk.Tk()
+            root.withdraw()  # Hide the root window
+            file_path = filedialog.asksaveasfilename(defaultextension='.xml')
+
+            # Write the XML data to the selected file path
+            if file_path:
+                with open(file_path, 'w') as file:
+                    file.write(xml_pretty)
+                messagebox.showinfo("Success", "Filtered transactions saved to XML file successfully.")
+
+        except requests.exceptions.HTTPError as http_err:
+            messagebox.showerror("HTTP Error", f"HTTP error occurred: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            messagebox.showerror("Connection Error", f"Connection error occurred: {conn_err}")
+        except requests.exceptions.JSONDecodeError as json_err:
+            messagebox.showerror("JSON Decode Error", f"Error decoding JSON data: {json_err}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+        finally:
+            root.destroy()
 
     def insert_category():
         # Get the category name from the Entry widget
@@ -200,13 +270,25 @@ def adminPanel():
     searchBar = tk.Entry(frame1, font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black", justify="left")
     searchBar.place(x=75, y=400, width=180, height=30)
 
+    start_date_label = tk.Label(frame1, text="Start Date:", font=("Inter", 14), bg="#D9D9D9")
+    start_date_label.place(x=75, y=450, width=100, height=25)
+    start_date_picker = DateEntry(frame1, width=12, background='darkblue', foreground='white', borderwidth=2,
+                                  date_pattern='yyyy-mm-dd')
+    start_date_picker.place(x=180, y=450, width=150, height=25)
+
+    end_date_label = tk.Label(frame1, text="End Date:", font=("Inter", 14), bg="#D9D9D9")
+    end_date_label.place(x=75, y=480, width=100, height=25)
+    end_date_picker = DateEntry(frame1, width=12, background='darkblue', foreground='white', borderwidth=2,
+                                date_pattern='yyyy-mm-dd')
+    end_date_picker.place(x=180, y=480, width=150, height=25)
+
     downloadJSONFile = tk.Button(frame1, text="Download Transactions in JSON", font=("Inter", 12, "normal"),
                                  bg="#D9D9D9", fg="black", justify="left", command=lambda: get_json_button_click())
-    downloadJSONFile.place(x=35, y=500, width=250, height=30)
+    downloadJSONFile.place(x=35, y=550, width=250, height=30)
 
     downloadXMLFile = tk.Button(frame1, text="Download Transactions in XML", font=("Inter", 12, "normal"),
                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_xml_button_click())
-    downloadXMLFile.place(x=300, y=500, width=250, height=30)
+    downloadXMLFile.place(x=300, y=550, width=250, height=30)
 
     balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_label.place(x=35, y=600, width=160, height=24)
@@ -229,6 +311,17 @@ def adminPanel():
     table.heading("Description", text="Description")
     table.heading("Ref", text="Ref")
     table.heading("Amount", text="Amount")
+
+    def enable_download_buttons():
+        """Enable the download buttons if both start and end dates are selected."""
+        start_date = start_date_picker.get_date()
+        end_date = end_date_picker.get_date()
+        if start_date and end_date:
+            downloadJSONFile['state'] = 'normal'
+            downloadXMLFile['state'] = 'normal'
+        else:
+            downloadJSONFile['state'] = 'disabled'
+            downloadXMLFile['state'] = 'disabled'
 
     # Looping through the columns and get the heading
     for column in table["columns"]:
@@ -268,6 +361,13 @@ def adminPanel():
 
     details_button = ttk.Button(frame2, text="Details", command=lambda: details_button_click())
     details_button.place(x=485, y=35, width=100, height=30)
+
+    start_date_picker.bind("<<DateEntrySelected>>", lambda event: enable_download_buttons())
+    end_date_picker.bind("<<DateEntrySelected>>", lambda event: enable_download_buttons())
+
+    # Initially disable download buttons until dates are picked
+    downloadJSONFile['state'] = 'disabled'
+    downloadXMLFile['state'] = 'disabled'
 
     search = tk.Button(frame1, text="Search Keyword", font=("Inter", 12, "normal"),
                        bg="#D9D9D9", fg="black", justify="left", command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
