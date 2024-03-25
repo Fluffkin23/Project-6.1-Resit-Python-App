@@ -7,6 +7,10 @@ from json2xml import json2xml
 from bson import json_util, ObjectId
 from bson.json_util import dumps as json_util_dumps
 
+from datetime import datetime
+from flask import request, jsonify
+from bson.json_util import dumps
+
 # Get instances of Flask App and MongoDB collection from dataBaseConnectionPyMongo file
 from src.base_application.api import app, transactions_collection, postgre_connection, postgre_connection_user
 from src.base_application.api.api_utils import validate_json, validate_member_json, validate_association_json, \
@@ -94,6 +98,58 @@ def downloadXML():
     response.headers["Content-Type"] = "application/xml"
     response.headers["Content-Disposition"] = "attachment; filename=data.xml"
     return response
+
+
+
+
+@app.route('/api/filterTransactions', methods=['POST'])
+def filter_transactions():
+    # Extract start and end dates from the request
+    data = request.get_json()
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
+
+    if not (start_date_str and end_date_str):
+        return jsonify({'error': 'start_date and end_date are required'}), 400
+
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+        # Here you should replace the following line with the actual call to your database or API
+        response = requests.get("your_api_server_ip_here" + "/api/getTransactions")
+        response.raise_for_status()
+        documents = response.json()
+
+        filtered_documents = []
+        for document in documents:
+            new_document = document.copy()
+            new_document['transactions'] = []
+
+            for transaction in document['transactions']:
+                transaction_date = datetime.strptime(transaction['entry_date'], "%Y-%m-%d").date()
+                if start_date <= transaction_date <= end_date:
+                    new_document['transactions'].append(transaction)
+
+            if new_document['transactions']:
+                filtered_documents.append(new_document)
+
+        return jsonify(filtered_documents)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except requests.exceptions.HTTPError as e:
+        return jsonify({'error': 'HTTP error from external API'}), 500
+    except Exception as e:
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+
+
+
+
+
+
+
 
 
 @app.route("/api/getTransactions", methods=["GET"])

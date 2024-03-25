@@ -107,33 +107,42 @@ def adminPanel():
         return rows_out
 
     def get_json_button_click2():
-        start_date = start_date_picker.get_date()
-        end_date = end_date_picker.get_date()
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes("-topmost", 1)
 
-        # Building the request URL with query parameters for start and end dates
-        request_url = f"{api_server_ip}/api/getTransactions?startDate={start_date}&endDate={end_date}"
+        # Assuming you have a way to get the specific date
 
+        date = start_date_picker.get_date()
         try:
+            # Building the request URL with query parameters for the specific date
+            request_url = f"{api_server_ip}/api/getTransactionsByDate?date={date}"
+
             response = requests.get(request_url)
             response.raise_for_status()  # This will raise an exception for HTTP error codes
-            filtered_documents = response.json()  # Assuming the API now directly returns the filtered transactions
+            filtered_transactions = response.json()  # Assuming the API now directly returns the filtered transactions
 
-            # Convert the filtered documents to JSON
-            formatted_json = json_util.dumps(filtered_documents, indent=4)
+            # Convert the filtered transactions to JSON
+            formatted_json = json_util.dumps(filtered_transactions, indent=4)
 
-            # Example: Print the formatted JSON
-            print(formatted_json)
+            # Prompt the user to select a file path for saving the JSON
+            file_path = filedialog.asksaveasfilename(defaultextension='.json')
+            if file_path:
+                # Write the formatted JSON to the selected file path
+                with open(file_path, 'w') as f:
+                    f.write(formatted_json)
+                messagebox.showinfo("Success", "Filtered transactions saved to JSON file successfully.")
 
-            # Include any additional code here to prompt the user to save the JSON file
-            # ...
-
-        except requests.exceptions.HTTPError as err:
-            print(f"HTTP Error: {err}")
+        except requests.exceptions.HTTPError as http_err:
+            messagebox.showerror("HTTP Error", f"HTTP error occurred: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            messagebox.showerror("Connection Error", f"Connection error occurred: {conn_err}")
+        except requests.exceptions.JSONDecodeError as json_err:
+            messagebox.showerror("JSON Decode Error", f"Error decoding JSON data: {json_err}")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            messagebox.showerror("Error", f"An error occurred: {e}")
         finally:
-            # Any cleanup code that needs to run whether exceptions were raised or not
-            print("Cleanup can go here")
+            root.destroy()
 
     def get_json_button_click():
         root = tk.Tk()
@@ -484,7 +493,7 @@ def adminPanel():
     def refresh_balance_label():
         try:
             # Define the directory path to watch
-            directory_path = "/src/MT940"
+            directory_path = "/src/MT940Files"
 
             # Create an instance of FileWatcher with the directory path
             file_watcher = parser.FileWatcher(directory_path)
