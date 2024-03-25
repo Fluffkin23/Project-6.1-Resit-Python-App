@@ -213,26 +213,36 @@ def adminPanel():
             root.destroy()
 
     def insert_category():
-        # Get the category name from the Entry widget
-        category_name = entry_category_name.get()
+        try:
+            # Get the category name from the Entry widget
+            category_name = entry_category_name.get()
 
-        # Define the URL of the API endpoint
-        url = api_server_ip + "/api/insertCategory"
+            # Define the URL of the API endpoint
+            url = api_server_ip + "/api/insertCategory"
 
-        # Prepare the data payload as a dictionary
-        data = {'name': category_name}
+            # Prepare the data payload as a dictionary
+            data = {'categoryID': None,
+                    'name': category_name}  # Set categoryID to None as it's typically auto-incremented
 
-        # Send a POST request to the Flask API
-        response = requests.post(url, data=data)
+            # Set the content type header to JSON
+            headers = {'Content-Type': 'application/json'}
 
-        # Process the response
-        if response.status_code == 201:
-            messagebox.showinfo("Success", "Category added successfully.")
-            # Optionally clear the entry widget after successful insert
-            entry_category_name.delete(0, tk.END)
-        else:
-            # Display an error message if something goes wrong
-            messagebox.showerror("Error", "Failed to add category. Server responded with: " + response.text)
+            # Send a POST request to the Flask API with the content type header
+            response = requests.post(url, json=data, headers=headers)
+
+            # Process the response
+            if response.status_code == 201:
+                messagebox.showinfo("Success", "Category added successfully.")
+                # Optionally clear the entry widget after successful insert
+                entry_category_name.delete(0, tk.END)
+                # Refresh balance label after successful category insertion
+                refresh_balance_label()
+            else:
+                # Display an error message if something goes wrong
+                messagebox.showerror("Error", "Failed to add category. Server responded with: " + response.text)
+        except Exception as e:
+            # Handle any exceptions
+            messagebox.showerror("Error", "An error occurred: " + str(e))
 
     # ---------------------------------------------------- Frame 1 --------------------------------------------------- #
     label = tk.Label(frame1, text="Admin Panel", font=("Inter", 24, "normal"), bg="#D9D9D9", fg="black", justify="left")
@@ -408,12 +418,17 @@ def adminPanel():
             widget.config(text="")
         else:
             keyword_table = retrieveDB_keyword_search(keyword)
-            sum_output = 0
-            # Calculate total sum of money per keyword
-            for tuple_entry in keyword_table:
-                sum_output = sum_output + float(tuple_entry[5])
-            widget.config(text=str(sum_output))
-            widget.place(x=275, y=700, width=350, height=24)
+            if keyword_table is not None:  # Check if data is retrieved successfully
+                sum_output = 0
+                # Calculate total sum of money per keyword
+                for tuple_entry in keyword_table:
+                    sum_output = sum_output + float(tuple_entry[5])
+                widget.config(text=str(sum_output))
+                widget.place(x=275, y=700, width=350, height=24)
+            else:
+                # Handle the case where no data is retrieved
+                messagebox.showinfo("Info", "No data available.")
+                return
 
         # Insert retrieved data into the table
         for result in keyword_table:
@@ -425,22 +440,36 @@ def adminPanel():
         searchBar.delete(first=0, last=255)
         # Show all transactions if keyword entry field is empty
         rows = retrieveDB()
-        if len(rows) == 0:
-            return
-        # Insert retrieved data into the table
-        for result in rows:
-            table_inp.insert("", "end", values=result)
-        # Remove the sum per search label if table is updated
-        widget.config(text="")
-        refresh_balance_label()
+        if rows is not None:  # Check if data is retrieved successfully
+            # Insert retrieved data into the table
+            for result in rows:
+                table_inp.insert("", "end", values=result)
+            # Remove the sum per search label if table is updated
+            widget.config(text="")
+            # Refresh balance label after updating the table
+            refresh_balance_label()
+        else:
+            # Handle the case where no data is retrieved
+            messagebox.showinfo("Info", "No data available.")
 
     def refresh_balance_label():
-        # Call the function to update the balance from FileWatcher
-        new_balance = parser.FileWatcher.update_balance(FileWatcher.update_balance(self))
-        if new_balance is not None:
-            balance_number.configure(text=str(new_balance))
-        else:
-            balance_number.config(text="Failed to update")
+        try:
+            # Define the directory path to watch
+            directory_path = "/src/resources"  # Replace "your_directory_path_here" with the actual directory path
+
+            # Create an instance of FileWatcher with the directory path
+            file_watcher = parser.FileWatcher(directory_path)
+
+            # Call the function to update the balance from FileWatcher
+            new_balance = file_watcher.update_balance()
+            if new_balance is not None:
+                balance_number.configure(text=str(new_balance))
+            else:
+                balance_number.config(text="Failed to update")
+        except Exception as e:
+            # Handle any exceptions
+            messagebox.showerror("Error", "An error occurred: " + str(e))
+
 
 
     # Bind the on_closing function to the window close event
