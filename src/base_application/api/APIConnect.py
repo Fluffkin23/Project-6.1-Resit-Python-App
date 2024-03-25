@@ -36,6 +36,7 @@ def index():
     }
     return make_response(jsonify(answer), 200)
 
+
 # ----------------------- No SQL MongoDB functions of the API ---------------------------------
 
 
@@ -96,14 +97,21 @@ def downloadXML():
 
 @app.route("/api/getTransactions", methods=["GET"])
 def get_all_transactions():
-    output_transactions = []
-
-    for trans in transactions_collection.find():
-        output_transactions.append(trans)
-
-    return output_transactions
-
-
+    try:
+        transactions_cursor = transactions_collection.find()
+        transactions_list = list(transactions_cursor)
+        return Response(
+            response=json_util.dumps(transactions_list),
+            status=200,
+            mimetype='application/json'
+        )
+    except Exception as e:
+        print("Error retrieving or serializing transactions:", e)
+        return Response(
+            response=json_util.dumps({"error": "Internal Server Error"}),
+            status=500,
+            mimetype='application/json'
+        )
 # Send a POST request with the file path to this function
 @app.route("/api/uploadFile", methods=["POST"])
 def file_upload():
@@ -150,7 +158,7 @@ def insert_association():
         # Validate with schema
         # if not validate_association_json(json_data):
         #     print("Schema failed")
-            # jsonify({'Error': 'Error Occured'})
+        # jsonify({'Error': 'Error Occured'})
 
         accountID = str(json_data['accountID'])
         name = str(json_data['name'])
@@ -283,7 +291,8 @@ def insert_file():
 
         # Call a stored procedure
         cursor.execute('CALL insert_into_file(%s,%s,%s,%s,%s,%s)', (
-            reference_number, statement_number, sequence_detail, available_balance, forward_available_balance, account_identification))
+            reference_number, statement_number, sequence_detail, available_balance, forward_available_balance,
+            account_identification))
 
         # commit the transaction
         postgre_connection.commit()
@@ -442,11 +451,3 @@ def search_keyword(keyword):
         return jsonify(results)
     except (Exception, psycopg2.DatabaseError) as error:
         return jsonify({'message': error})
-
-
-
-
-
-
-
-
