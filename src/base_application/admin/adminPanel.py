@@ -106,6 +106,35 @@ def adminPanel():
             rows_out.append(tuple(temp_tuple))
         return rows_out
 
+    def get_json_button_click2():
+        start_date = start_date_picker.get_date()
+        end_date = end_date_picker.get_date()
+
+        # Building the request URL with query parameters for start and end dates
+        request_url = f"{api_server_ip}/api/getTransactions?startDate={start_date}&endDate={end_date}"
+
+        try:
+            response = requests.get(request_url)
+            response.raise_for_status()  # This will raise an exception for HTTP error codes
+            filtered_documents = response.json()  # Assuming the API now directly returns the filtered transactions
+
+            # Convert the filtered documents to JSON
+            formatted_json = json_util.dumps(filtered_documents, indent=4)
+
+            # Example: Print the formatted JSON
+            print(formatted_json)
+
+            # Include any additional code here to prompt the user to save the JSON file
+            # ...
+
+        except requests.exceptions.HTTPError as err:
+            print(f"HTTP Error: {err}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            # Any cleanup code that needs to run whether exceptions were raised or not
+            print("Cleanup can go here")
+
     def get_json_button_click():
         root = tk.Tk()
         root.withdraw()
@@ -300,7 +329,7 @@ def adminPanel():
     end_date_picker.place(x=180, y=480, width=150, height=25)
 
     downloadJSONFile = tk.Button(frame1, text="Download Transactions in JSON", font=("Inter", 12, "normal"),
-                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_json_button_click())
+                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_json_button_click2())
     downloadJSONFile.place(x=35, y=550, width=250, height=30)
 
     downloadXMLFile = tk.Button(frame1, text="Download Transactions in XML", font=("Inter", 12, "normal"),
