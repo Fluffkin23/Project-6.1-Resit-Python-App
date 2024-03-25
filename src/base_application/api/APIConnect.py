@@ -31,7 +31,8 @@ def index():
             "insertMemberSQL": "/api/insertMemberSQL/<name>/<email>",
             "updateTransactionSQL": "/api/updateTransactionSQL/<transaction_id>",
             "deleteMemberSQL": "/api/deleteMember",
-            "getAssociationSQL": "/api/getAssociation"
+            "getAssociationSQL": "/api/getAssociation",
+            "insertCategorySQL": "/api/insertCategory"
         }
     }
     return make_response(jsonify(answer), 200)
@@ -367,6 +368,56 @@ def get_category():
     except psycopg2.InterfaceError as error:
         error_message = str(error)
         return jsonify({'error': error_message})
+
+
+
+@app.route("/api/insert_category_into_database", methods=["POST"])
+def insert_category_into_database(category_name):
+    try:
+        # Creating a cursor object using the cursor() method
+        cursor = postgre_connection.cursor()
+        # SQL statement for inserting a category into the Category table
+        sql_insert_category = "INSERT INTO Category (name) VALUES (%s)"
+
+        # Execute the SQL statement with the category name as parameter
+        cursor.execute(sql_insert_category, (category_name,))
+
+        # Commit the transaction
+        postgre_connection.commit()
+
+        # Return True to indicate successful insertion
+        return True
+    except psycopg2.Error as e:
+        # Print the error message
+        print("Error inserting category:", e)
+        # Rollback the transaction in case of error
+        postgre_connection.rollback()
+        # Return False to indicate failure
+        return False
+    finally:
+        # Close the cursor if it was successfully opened
+        if cursor:
+            cursor.close()
+            print("PostgreSQL cursor is closed")
+
+@app.route("/api/insertCategory", methods=["POST"])
+def insert_category():
+    try:
+        # Get the category name from the POST request
+        category_name = request.json.get('name')
+
+        # Perform any necessary validation on the category_name
+
+        # Insert the category into the database
+        if insert_category_into_database(category_name):
+            # Return a success message
+            return jsonify({'message': 'Category added successfully'}), 201
+        else:
+            return jsonify({'error': 'Failed to add category to the database'}), 500
+    except Exception as e:
+        # Return an error message if something goes wrong
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route("/api/getTransactionOnId/<trans_id>", methods=["GET"])
