@@ -324,7 +324,7 @@ def adminPanel():
     addCashTransactionButton = tk.Button(frame1, text="Add Cash Transaction", font=("Inter", 12, "normal"),
                                          bg="#D9D9D9", fg="black", justify="left",
                                          command=open_add_cash_transaction_window)
-    addCashTransactionButton.place(x=75, y=450, width=180, height=30)
+    addCashTransactionButton.place(x=75, y=250, width=180, height=30)
 
     # ---------------------------------------------------- Frame 2 --------------------------------------------------- #
     table = ttk.Treeview(frame2, columns=("ID", "Date", "Details", "Description", "Ref", "Amount"),
@@ -400,7 +400,7 @@ def adminPanel():
     addCashButton = tk.Button(frame1, text="Add Cash", font=("Inter", 12, "normal"),
                                          bg="#D9D9D9", fg="black", justify="left",
                                          command=open_add_cash_window)
-    addCashButton.place(x=300, y=450, width=180, height=30)
+    addCashButton.place(x=300, y=250, width=180, height=30)
 
     update_button = ttk.Button(frame2, text="Update", command=lambda: update_button_click(table, search_summary_num))
     update_button.place(x=235, y=35, width=100, height=30)
@@ -455,7 +455,7 @@ def adminPanel():
     def refresh_balance_label():
         try:
             # Define the directory path to watch
-            directory_path = "/src/resources"  # Replace "your_directory_path_here" with the actual directory path
+            directory_path = "/src/MT940"
 
             # Create an instance of FileWatcher with the directory path
             file_watcher = parser.FileWatcher(directory_path)
