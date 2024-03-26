@@ -100,8 +100,6 @@ def downloadXML():
     return response
 
 
-
-
 @app.route('/api/filterTransactions', methods=['POST'])
 def filter_transactions():
     # Extract start and end dates from the request
@@ -135,10 +133,38 @@ def filter_transactions():
                 filtered_documents.append(new_document)
 
         return jsonify(filtered_documents)
+
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except requests.exceptions.HTTPError as e:
         return jsonify({'error': 'HTTP error from external API'}), 500
+    except Exception as e:
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+
+@app.route('/api/downloadTransactionsByDate', methods=['GET'])
+def download_transactions_by_date():
+    # Extract the specific date from query parameters
+    date_str = request.args.get('date')
+
+    if not date_str:
+        return jsonify({'error': 'Date parameter is required'}), 400
+
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        filtered_transactions = filter_transactions(date)
+
+        # Convert the filtered transactions to JSON format
+        formatted_json = json.dumps(filtered_transactions, indent=4, default=str)  # Ensure datetime objects are serialized properly
+
+        # Create a response with the JSON data
+        response = Response(formatted_json, mimetype='application/json')
+        response.headers['Content-Disposition'] = 'attachment; filename=filtered_transactions.json'
+        return response
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': 'An unexpected error occurred'}), 500
 

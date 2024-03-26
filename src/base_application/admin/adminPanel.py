@@ -111,19 +111,20 @@ def adminPanel():
         root.withdraw()
         root.wm_attributes("-topmost", 1)
 
-        # Assuming you have a way to get the specific date
+        # For demonstration, I'm hardcoding the date and API server IP.
+        # You should replace these with dynamic values as needed.
+        date = "2023-02-08"  # Example date
 
-        date = start_date_picker.get_date()
+
+        request_url = f"{api_server_ip}/api/getTransactionsByDate?date={date}"
+
         try:
-            # Building the request URL with query parameters for the specific date
-            request_url = f"{api_server_ip}/api/getTransactionsByDate?date={date}"
-
             response = requests.get(request_url)
             response.raise_for_status()  # This will raise an exception for HTTP error codes
             filtered_transactions = response.json()  # Assuming the API now directly returns the filtered transactions
 
-            # Convert the filtered transactions to JSON
-            formatted_json = json_util.dumps(filtered_transactions, indent=4)
+            # Assuming json_util.dumps is similar to json.dumps from the standard library
+            formatted_json = json.dumps(filtered_transactions, indent=4)
 
             # Prompt the user to select a file path for saving the JSON
             file_path = filedialog.asksaveasfilename(defaultextension='.json')
