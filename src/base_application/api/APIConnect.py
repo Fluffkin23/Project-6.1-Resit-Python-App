@@ -97,8 +97,16 @@ def downloadXML():
 
 @app.route("/api/getTransactions", methods=["GET"])
 def get_all_transactions():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    query = {}
+
+    if start_date and end_date:
+        query["transactions.date"] = {"$gte": start_date, "$lte": end_date}
+
     try:
-        transactions_cursor = transactions_collection.find()
+        transactions_cursor = transactions_collection.find(query)
         transactions_list = list(transactions_cursor)
         return Response(
             response=json_util.dumps(transactions_list),
@@ -112,6 +120,8 @@ def get_all_transactions():
             status=500,
             mimetype='application/json'
         )
+
+
 # Send a POST request with the file path to this function
 @app.route("/api/uploadFile", methods=["POST"])
 def file_upload():

@@ -107,103 +107,59 @@ def adminPanel():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
 
+        url = f"{api_server_ip}/api/getTransactions?start_date={start_date}&end_date={end_date}"
+
         try:
-            response = requests.get(api_server_ip + "/api/getTransactions")
-            response.raise_for_status()  # This will raise an exception for HTTP error codes
+            response = requests.get(url)
+            response.raise_for_status()
+
             documents = response.json()
 
-            filtered_documents = []
-            for document in documents:
-                # Initialize a new document with the same structure but with an empty transactions list
-                new_document = document.copy()
-                new_document['transactions'] = []
-
-                # Iterate over each transaction in the current document
-                for transaction in document['transactions']:
-                    # Convert the entry_date string to a datetime object for comparison
-                    transaction_date = datetime.strptime(transaction['entry_date'], "%Y-%m-%d").date()
-                    # Check if the transaction's date is within the selected range
-                    if start_date <= transaction_date <= end_date:
-                        new_document['transactions'].append(transaction)
-
-                # Only add the document to the filtered list if it has at least one transaction in the range
-                if new_document['transactions']:
-                    filtered_documents.append(new_document)
-
-            # Convert the filtered documents to JSON
-            formatted_json = json_util.dumps(filtered_documents, indent=4)
-
-            # Prompt the user to select a file path for saving the JSON
             file_path = filedialog.asksaveasfilename(defaultextension='.json')
             if file_path:
-                # Write the formatted JSON to the selected file path
                 with open(file_path, 'w') as f:
-                    f.write(formatted_json)
+                    json.dump(documents, f, indent=4)
                 messagebox.showinfo("Success", "Filtered transactions saved to JSON file successfully.")
-
-        except requests.exceptions.HTTPError as http_err:
-            messagebox.showerror("HTTP Error", f"HTTP error occurred: {http_err}")
-        except requests.exceptions.ConnectionError as conn_err:
-            messagebox.showerror("Connection Error", f"Connection error occurred: {conn_err}")
-        except requests.exceptions.JSONDecodeError as json_err:
-            messagebox.showerror("JSON Decode Error", f"Error decoding JSON data: {json_err}")
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
+        except requests.exceptions.RequestException as e:
+            messagebox.showerror("Error", f"Failed to fetch transactions: {e}")
         finally:
             root.destroy()
 
     def get_xml_button_click():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
-
+        url = f"{api_server_ip}/api/getTransactions?start_date={start_date}&end_date={end_date}"
         try:
-            response = requests.get(api_server_ip + "/api/getTransactions")
-            documents = response.json()
+            response = requests.get(url)
+            if response.status_code == 200:
+                documents = response.json()
 
-            # Root element for XML
-            root = ET.Element("Transactions")
+                # Root element for XML
+                root = ET.Element("MT940")
 
-            for document in documents:
-                doc_element = ET.SubElement(root, "Document")
-                # Add document-level fields if needed, for example:
-                # ET.SubElement(doc_element, "TransactionReference").text = document.get("transaction_reference", "")
-
-                # Process only transactions within the given date range
-                for transaction in document['transactions']:
-                    transaction_date = datetime.strptime(transaction['entry_date'], "%Y-%m-%d").date()
-                    if start_date <= transaction_date <= end_date:
+                for document in documents:
+                    doc_element = ET.SubElement(root, "Document")
+                    for transaction in document['transactions']:
                         trans_element = ET.SubElement(doc_element, "Transaction")
                         for key, value in transaction.items():
                             child = ET.SubElement(trans_element, key)
                             child.text = str(value)
 
-            # Convert ElementTree to string
-            xml_str = ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8')
+                # Convert ElementTree to string and pretty print XML
+                xml_str = ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8')
+                xml_pretty = xml.dom.minidom.parseString(xml_str).toprettyxml()
 
-            # Pretty print XML (optional)
-            xml_pretty = xml.dom.minidom.parseString(xml_str).toprettyxml()
+                # Use the root tkinter window for the file dialog
+                file_path = filedialog.asksaveasfilename(defaultextension='.xml')
 
-            # Prompt the user to select a file path
-            root = tk.Tk()
-            root.withdraw()  # Hide the root window
-            file_path = filedialog.asksaveasfilename(defaultextension='.xml')
+                # Write the XML data to the selected file path
+                if file_path:
+                    with open(file_path, 'w') as file:
+                        file.write(xml_pretty)
+                    messagebox.showinfo("Success", "Transactions saved to XML file successfully.")
 
-            # Write the XML data to the selected file path
-            if file_path:
-                with open(file_path, 'w') as file:
-                    file.write(xml_pretty)
-                messagebox.showinfo("Success", "Filtered transactions saved to XML file successfully.")
-
-        except requests.exceptions.HTTPError as http_err:
-            messagebox.showerror("HTTP Error", f"HTTP error occurred: {http_err}")
-        except requests.exceptions.ConnectionError as conn_err:
-            messagebox.showerror("Connection Error", f"Connection error occurred: {conn_err}")
-        except requests.exceptions.JSONDecodeError as json_err:
-            messagebox.showerror("JSON Decode Error", f"Error decoding JSON data: {json_err}")
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
-        finally:
-            root.destroy()
+        except requests.exceptions.RequestException as e:
+            messagebox.showerror("Error", f"Failed to fetch transactions: {e}")
 
     def insert_category():
         # Get the category name from the Entry widget
