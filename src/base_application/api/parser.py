@@ -86,8 +86,6 @@ class FileWatcher:
 
         observer.join()
 
-
-
 if __name__ == "__main__":
     watch_directory = "../../MT940Files"
 
