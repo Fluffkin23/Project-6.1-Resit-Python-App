@@ -7,16 +7,23 @@ from datetime import datetime
 from tkinter import ttk, messagebox
 from tkinter import filedialog
 
+
 from bson import json_util
 from tkcalendar import DateEntry
+import psycopg2
+from pywin.framework.editor import frame
+from self import self
+
 
 from src.base_application.api import parser
+from src.base_application.api.parser import FileWatcher
+from src.base_application.app_pages.addCash import open_add_cash_window
+from src.base_application.app_pages.cashAddOn import open_add_cash_transaction_window
 from src.base_application.member.manageMembers import manage_members
 from src.base_application.app_pages.fileUpload import main
 import requests
 from src.base_application import api_server_ip
 import xml.etree.ElementTree as ET
-
 
 def adminPanel():
     selected_row = None
@@ -246,6 +253,8 @@ def adminPanel():
                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_xml_button_click())
     downloadXMLFile.place(x=300, y=550, width=250, height=30)
 
+
+
     balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_label.place(x=35, y=600, width=160, height=24)
 
@@ -257,6 +266,11 @@ def adminPanel():
 
     search_summary_num = tk.Label(frame1, text="", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     search_summary_num.pack_forget()
+
+    addCashTransactionButton = tk.Button(frame1, text="Add Cash Transaction", font=("Inter", 12, "normal"),
+                                         bg="#D9D9D9", fg="black", justify="left",
+                                         command=open_add_cash_transaction_window)
+    addCashTransactionButton.place(x=75, y=450, width=180, height=30)
 
     # ---------------------------------------------------- Frame 2 --------------------------------------------------- #
     table = ttk.Treeview(frame2, columns=("ID", "Date", "Details", "Description", "Ref", "Amount"),
@@ -329,6 +343,11 @@ def adminPanel():
                        bg="#D9D9D9", fg="black", justify="left", command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
     search.place(x=300, y=400, width=180, height=30)
 
+    addCashButton = tk.Button(frame1, text="Add Cash", font=("Inter", 12, "normal"),
+                                         bg="#D9D9D9", fg="black", justify="left",
+                                         command=open_add_cash_window)
+    addCashButton.place(x=300, y=450, width=180, height=30)
+
     update_button = ttk.Button(frame2, text="Update", command=lambda: update_button_click(table, search_summary_num))
     update_button.place(x=235, y=35, width=100, height=30)
 
@@ -373,7 +392,7 @@ def adminPanel():
 
     def refresh_balance_label():
         # Call the function to update the balance from FileWatcher
-        new_balance = parser.FileWatcher.update_balance()
+        new_balance = parser.FileWatcher.update_balance(FileWatcher.update_balance(self))
         if new_balance is not None:
             balance_number.configure(text=str(new_balance))
         else:

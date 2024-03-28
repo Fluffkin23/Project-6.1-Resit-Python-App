@@ -34,7 +34,9 @@ def get_flask_app():
 def get_connection_postgre():
     # Establishing the connection
     conn = psycopg2.connect(
+
         database="Quintor", user='postgres', password='password', host='localhost', port='5432'
+
     )
     print(conn)
     return conn
