@@ -17,13 +17,16 @@ def get_database():
 
 
 def get_collection():
-    namedb = get_database()
-    transactions_collection = namedb["Transactions"]
-    # Example: Print the first 5 transactions to inspect their structure
-    for transaction in transactions_collection.find().limit(5):
-        print(transaction)
-
-    return transactions_collection
+    try:
+        namedb = get_database()
+        transactions_collection = namedb["Transactions"]
+        # Example: Print the first 5 transactions to inspect their structure
+        for transaction in transactions_collection.find().limit(5):
+            print(transaction)
+        return transactions_collection
+    except Exception as e:
+        print(f"Error accessing MongoDB collection: {e}")
+        return None
 
 
 def get_flask_app():
@@ -34,7 +37,7 @@ def get_flask_app():
 def get_connection_postgre():
     # Establishing the connection
     conn = psycopg2.connect(
-        database="Quintor", user='postgres', password='parola', host='localhost', port='5432'
+        database="Quintor", user='postgres', password='Tex1game!', host='localhost', port='5432'
     )
     print(conn)
     return conn

@@ -6,7 +6,7 @@ from flask import jsonify, request, make_response, Flask, Response
 from json2xml import json2xml
 from bson import json_util, ObjectId
 from bson.json_util import dumps as json_util_dumps
-
+import requests
 from datetime import datetime
 from flask import request, jsonify
 from bson.json_util import dumps
@@ -15,6 +15,13 @@ from bson.json_util import dumps
 from src.base_application.api import app, transactions_collection, postgre_connection, postgre_connection_user
 from src.base_application.api.api_utils import validate_json, validate_member_json, validate_association_json, \
     validate_xml
+
+# Ensure transactions_collection is properly initialized
+try:
+    transactions_cursor = transactions_collection.find().limit(5)
+    transactions_list = list(transactions_cursor)
+except Exception as e:
+    print("Error initializing transactions_collection:", e)
 
 
 @app.route("/")
@@ -36,7 +43,8 @@ def index():
             "updateTransactionSQL": "/api/updateTransactionSQL/<transaction_id>",
             "deleteMemberSQL": "/api/deleteMember",
             "getAssociationSQL": "/api/getAssociation",
-            "insertCategorySQL": "/api/insertCategory"
+            "insertCategorySQL": "/api/insertCategory",
+            "getFilesSQL": "/api/getFile"
         }
     }
     return make_response(jsonify(answer), 200)
@@ -100,7 +108,14 @@ def downloadXML():
     return response
 
 
-@app.route('/api/filterTransactions', methods=['POST'])
+@app.route('/api/transactions', methods=['GET'])
+def get_transactions():
+    # Here you should replace the following line with the actual call to your database or API
+    response = requests.get("your_api_server_ip_here" + "/api/getTransactions")
+    response.raise_for_status()
+    return jsonify(response.json())
+
+@app.route('/api/transactions/filter', methods=['POST'])
 def filter_transactions():
     # Extract start and end dates from the request
     data = request.get_json()
@@ -178,7 +193,8 @@ def download_transactions_by_date():
 
 
 
-@app.route("/api/getTransactions", methods=["GET"])
+# GET all transactions
+@app.route("/api/transactions", methods=["GET"])
 def get_all_transactions():
     try:
         transactions_cursor = transactions_collection.find()
@@ -195,6 +211,25 @@ def get_all_transactions():
             status=500,
             mimetype='application/json'
         )
+
+
+
+
+# POST a new transaction
+@app.route("/api/transactions", methods=["POST"])
+def create_transaction():
+    try:
+        # Get the JSON data from the request
+        json_data = request.get_json()
+
+        # Insert into NoSQL DB
+        transactions_collection.insert_one(json_data)
+
+        return jsonify({'message': 'Transaction created successfully'})
+    except Exception as e:
+        return jsonify({'error': 'An unexpected error occurred'})
+
+
 # Send a POST request with the file path to this function
 @app.route("/api/uploadFile", methods=["POST"])
 def file_upload():
@@ -212,104 +247,92 @@ def file_upload():
 
 
 # -------------------------- SQL PostGreSQL DB functions of the API ---------------------------
-@app.route("/api/deleteMember", methods=["DELETE"])
-def delete_member():
+# DELETE a member
+@app.route("/api/members/<member_id>", methods=["DELETE"])
+def delete_member(member_id):
     try:
-        member_id = request.args.get('memberid')
         cursor = postgre_connection.cursor()
-
-        # call a stored procedure
         cursor.execute('CALL delete_member(%s)', (member_id,))
-
-        # commit the procedure
         postgre_connection.commit()
-
-        # close the cursor
         cursor.close()
-
         return jsonify({'message': 'Member removed'})
-    except (Exception, psycopg2.DatabaseError) as error:
-        return jsonify({'message': str(error)})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 
 # The function receives a hashed password
-@app.route("/api/insertAssociation", methods=["POST"])
-def insert_association():
-    try:
-        # Get the JSON file from the POST request
-        json_data = json.loads(request.get_json())
-        # Validate with schema
-        # if not validate_association_json(json_data):
-        #     print("Schema failed")
-        # jsonify({'Error': 'Error Occured'})
 
+
+# POST a new association
+@app.route("/api/associations", methods=["POST"])
+def create_association():
+    try:
+        json_data = request.get_json()
         accountID = str(json_data['accountID'])
         name = str(json_data['name'])
         hashed_password = str(json_data['password'])
-
         cursor = postgre_connection.cursor()
-
-        # call a stored procedure
         cursor.execute('CALL insert_into_association(%s,%s,%s)', (accountID, name, hashed_password))
-
-        # commit the transaction
         postgre_connection.commit()
-
-        # close the cursor
         cursor.close()
+        return jsonify({'message': 'Association created successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
-        return jsonify({'message': 'File inserted successfully'})
-    except (Exception, psycopg2.DatabaseError) as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
-
-
-@app.route("/api/insertMemberSQL", methods=["POST"])
-def insert_member():
+# POST a new member
+# POST a new member
+@app.route("/api/members", methods=["POST"])
+def create_member():
     try:
-        # Get the JSON file from the POST request
-        json_temp = request.get_json()
-        json_data = json.loads(json_temp)
-        # Validate with schema
-        if not validate_member_json(json_data):
-            jsonify({'Error': 'Error Occured'})
-
+        json_data = request.get_json()
         name = json_data['name']
         email = json_data['email']
-
         cursor = postgre_connection.cursor()
-
-        # call a stored procedure
         cursor.execute('CALL insert_into_member(%s,%s)', (name, email))
-
-        # commit the transaction
         postgre_connection.commit()
-
-        # close the cursor
         cursor.close()
-
         return jsonify({'message': 'Member saved successfully'})
-    except (Exception, psycopg2.DatabaseError) as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route("/api/associations", methods=["GET", "POST"])
+def handle_associations():
+    if request.method == "GET":
+        try:
+            cursor = postgre_connection.cursor()
+            cursor.execute('SELECT * FROM select_all_association()')
+            data = cursor.fetchall()
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({'error': str(e)})
+    elif request.method == "POST":
+        try:
+            json_data = request.get_json()
+            # Validate JSON and insert into database
+            return jsonify({'message': 'Association created successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)})
 
 
-@app.route("/api/getAssociation", methods=["GET"])
-def get_association():
-    try:
-        cursor = postgre_connection.cursor()
 
-        # call a stored procedure
-        cursor.execute('SELECT * FROM select_all_association()')
-
-        # Get all data from the stored procedure
-        data = cursor.fetchall()
-
-        # Return data in JSON format
-        return jsonify(data)
-    except psycopg2.InterfaceError as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
+#handling transactions in NoSQL and SQL databases
+@app.route("/api/transactions", methods=["GET"])
+def handle_transactions():
+    if request.method == "GET":
+        try:
+            cursor = postgre_connection.cursor()
+            cursor.execute('SELECT * FROM select_all_transaction()')
+            data = cursor.fetchall()
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({'error': str(e)})
+    elif request.method == "POST":
+        try:
+            json_data = request.get_json()
+            # Validate JSON and insert into database
+            return jsonify({'message': 'Transaction created successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)})
 
 
 @app.route("/api/insertTransaction", methods=["POST"])
@@ -425,71 +448,42 @@ def get_file():
         return jsonify({'error': error_message})
 
 
-@app.route("/api/getMembers", methods=["GET"])
+@app.route("/api/members", methods=["GET"])
 def get_members():
     try:
         cursor = postgre_connection.cursor()
-
-        # call a stored procedure
         cursor.execute('SELECT * FROM select_all_member()')
-
-        # Get all data from the stored procedure
         data = cursor.fetchall()
-
-        # Return data in JSON format
         return jsonify(data)
     except psycopg2.InterfaceError as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
+        return jsonify({'error': str(error)}), 500
 
 
 @app.route("/api/getCategory", methods=["GET"])
-def get_category():
+def get_categories():
     try:
         cursor = postgre_connection.cursor()
-
-        # call a stored procedure
         cursor.execute('SELECT * FROM category')
-
-        # Get all data from the stored procedure
         data = cursor.fetchall()
-
-        # Return data in JSON format
         return jsonify(data)
     except psycopg2.InterfaceError as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
+        return jsonify({'error': str(error)}), 500
 
 
 
-@app.route("/api/insert_category_into_database", methods=["POST"])
-def insert_category_into_database(category_name):
+@app.route("/api/categories", methods=["POST"])
+def create_category():
     try:
-        # Creating a cursor object using the cursor() method
+        category_name = request.json.get('name')
+        if not category_name:
+            return jsonify({'error': 'Category name is required'}), 400
+
         cursor = postgre_connection.cursor()
-        # SQL statement for inserting a category into the Category table
-        sql_insert_category = "INSERT INTO Category (name) VALUES (%s)"
-
-        # Execute the SQL statement with the category name as parameter
-        cursor.execute(sql_insert_category, (category_name,))
-
-        # Commit the transaction
+        cursor.execute('INSERT INTO Category (name) VALUES (%s)', (category_name,))
         postgre_connection.commit()
-
-        # Return True to indicate successful insertion
-        return True
-    except psycopg2.Error as e:
-        # Print the error message
-        print("Error inserting category:", e)
-        # Rollback the transaction in case of error
-        postgre_connection.rollback()
-        # Return False to indicate failure
-        return False
-    finally:
-        # Close the cursor if it was successfully opened
-        if cursor:
-            cursor.close()
-            print("PostgreSQL cursor is closed")
+        return jsonify({'message': 'Category added successfully'}), 201
+    except psycopg2.Error as error:
+        return jsonify({'error': str(error)}), 500
 
 @app.route("/api/insertCategory", methods=["POST"])
 def insert_category():
@@ -500,7 +494,7 @@ def insert_category():
         # Perform any necessary validation on the category_name
 
         # Insert the category into the database
-        if insert_category_into_database(category_name):
+        if create_category(category_name):
             # Return a success message
             return jsonify({'message': 'Category added successfully'}), 201
         else:
@@ -526,61 +520,37 @@ def get_transaction_on_id(trans_id):
         return jsonify({'error': error_message})
 
 
-@app.route("/api/updateTransaction", methods=["PUT"])
-def update_transaction():
+@app.route("/api/transactions/<int:trans_id>", methods=["GET"])
+def get_transaction_by_id(trans_id):
     try:
         cursor = postgre_connection.cursor()
-        # Get data from a post request
-        transactionID = request.form.get('trans_id')
-        description = request.form.get('desc')
-        categoryID = request.form.get('category')
-        memberID = request.form.get('member')
-        cursor = postgre_connection.cursor()
-
-        if categoryID == "None":
-            categoryID = None
-        else:
-            categoryID = int(categoryID)
-
-        if memberID == "None":
-            memberID = None
-        else:
-            memberID = int(memberID)
-
-        cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
-            transactionID, description, categoryID, memberID))
-
-        return jsonify({'message': 'Transaction Updated'})
-    except psycopg2.InterfaceError as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
-
-
-@app.route("/api/getTransactionOnIdJoin/<trans_id>", methods=["GET"])
-def get_transaction_on_id_join(trans_id):
-    try:
-        cursor = postgre_connection.cursor()
-
-        cursor.execute('select * from full_join_view where transactionid = %s', (int(trans_id),))
-
+        cursor.execute('SELECT * FROM select_transaction_on_id(%s)', (trans_id,))
         data = cursor.fetchall()
-
         return jsonify(data)
     except psycopg2.InterfaceError as error:
-        error_message = str(error)
-        return jsonify({'error': error_message})
+        return jsonify({'error': str(error)}), 500
 
 
-@app.route("/api/searchKeyword/<keyword>", methods=["GET"])
-def search_keyword(keyword):
+@app.route("/api/transactions/<int:trans_id>", methods=["PUT"])
+def update_transaction(trans_id):
+    try:
+        description = request.json.get('description')
+        category_id = request.json.get('category_id')
+        member_id = request.json.get('member_id')
+
+        cursor = postgre_connection.cursor()
+        cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (trans_id, description, category_id, member_id))
+        return jsonify({'message': 'Transaction Updated'})
+    except psycopg2.InterfaceError as error:
+        return jsonify({'error': str(error)}), 500
+
+
+@app.route("/api/transactions/search/<keyword>", methods=["GET"])
+def search_transactions(keyword):
     try:
         cursor = postgre_connection.cursor()
-
-        # Call the search_table2 function with a search term
         cursor.execute("SELECT * FROM search_table2(%s)", (keyword,))
-
-        # Fetch the results from the function call
         results = cursor.fetchall()
         return jsonify(results)
-    except (Exception, psycopg2.DatabaseError) as error:
-        return jsonify({'message': error})
+    except psycopg2.DatabaseError as error:
+        return jsonify({'error': str(error)}), 500
