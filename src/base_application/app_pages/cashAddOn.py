@@ -65,7 +65,7 @@ def open_add_cash_transaction_window():
             conn = psycopg2.connect(
                 database="Quintor",
                 user='postgres',
-                password='12345',
+                password='parola',
                 host='localhost',
                 port='5432'
             )
