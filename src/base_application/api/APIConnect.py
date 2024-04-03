@@ -178,19 +178,33 @@ def handle_associations():
         associations = cursor.fetchall()
         return jsonify(associations)
     elif request.method == "POST":
-        # Create a new association
-        data = request.get_json()
-        if not validate_association_json(data):  # Assuming this validation function exists
-            return jsonify({'error': 'Invalid association data'}), 400
         try:
+            # Get the JSON file from the POST request
+            json_data = json.loads(request.get_json())
+            # Validate with schema
+            # if not validate_association_json(json_data):
+            #     print("Schema failed")
+            # jsonify({'Error': 'Error Occured'})
+
+            accountID = str(json_data['accountID'])
+            name = str(json_data['name'])
+            hashed_password = str(json_data['password'])
+
             cursor = postgre_connection.cursor()
-            cursor.execute("INSERT INTO associations (name, other_fields) VALUES (%s, %s) RETURNING id",
-                           (data['name'], data['other_fields']))
-            new_id = cursor.fetchone()[0]
+
+            # call a stored procedure
+            cursor.execute('CALL insert_into_association(%s,%s,%s)', (accountID, name, hashed_password))
+
+            # commit the transaction
             postgre_connection.commit()
-            return jsonify({'message': 'Association created successfully', 'id': new_id}), 201
-        except psycopg2.Error as e:
-            return jsonify({'error': str(e)}), 500
+
+            # close the cursor
+            cursor.close()
+
+            return jsonify({'message': 'File inserted successfully'})
+        except (Exception, psycopg2.DatabaseError) as error:
+            error_message = str(error)
+            return jsonify({'error': error_message})
 
 
 @app.route("/api/members", methods=["GET"])
