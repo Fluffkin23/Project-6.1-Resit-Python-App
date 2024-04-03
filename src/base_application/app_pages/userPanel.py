@@ -12,7 +12,6 @@ def create_window():
     def destroy_window():
         if 'root' in globals() and root is not None:
             root.destroy()
-    """Create a Tkinter window with two equal sections."""
     # Create the main window
     root = tk.Tk()
     root.title("Sports Accounting - User Panel")
