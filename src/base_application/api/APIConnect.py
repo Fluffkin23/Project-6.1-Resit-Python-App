@@ -47,6 +47,20 @@ def index():
     return make_response(jsonify(answer), 200)
 
 
+@app.after_request
+def add_headers(response):
+    # Add whatever headers you want here, for example:
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # You can also set CORS headers if your API is accessed from different origins
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, OPTIONS, PATCH, POST, PUT'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    # Return the modified response
+    return response
+
+
 @app.route("/api/test")
 def test_api():
     return jsonify("API works fine!")
@@ -275,21 +289,47 @@ def delete_member(member_id):
 @app.route("/api/categories", methods=["GET", "POST"])
 def handle_categories():
     if request.method == "GET":
-        cursor = postgre_connection.cursor()
-        cursor.execute("SELECT * FROM categories")
-        categories = cursor.fetchall()
-        return jsonify(categories)
-    elif request.method == "POST":
-        data = request.get_json()
-        # Validate data if needed
         try:
             cursor = postgre_connection.cursor()
-            cursor.execute("INSERT INTO categories (name) VALUES (%s) RETURNING id", (data['name'],))
-            category_id = cursor.fetchone()[0]
-            postgre_connection.commit()
-            return jsonify({'message': 'Category created successfully', 'id': category_id}), 201
+            cursor.execute("SELECT * FROM category")
+            categories = cursor.fetchall()
+            return jsonify(categories), 200
         except psycopg2.Error as e:
+            return jsonify({'error': 'Failed to fetch categories'}), 500
+        finally:
+            if cursor:
+                cursor.close()
+    elif request.method == "POST":
+        try:
+            # Extract category name from the POST request
+            data = request.get_json()
+            category_name = data.get('name')
+
+            # Validate category_name if needed
+            if not category_name:
+                return jsonify({'error': 'Category name is required'}), 400
+
+            # Attempt to insert the category into the database
+            return insert_category_into_database(category_name)
+        except Exception as e:
             return jsonify({'error': str(e)}), 500
+
+
+def insert_category_into_database(category_name):
+    cursor = None
+    try:
+        cursor = postgre_connection.cursor()
+        cursor.execute("INSERT INTO category (name) VALUES (%s) RETURNING categoryid", (category_name,))
+        category_id = cursor.fetchone()[0]
+        postgre_connection.commit()
+        return jsonify({'message': 'Category added successfully', 'id': category_id}), 201
+    except psycopg2.Error as e:
+        postgre_connection.rollback()
+        print(e)  # Log the exact error
+        return jsonify({'error': 'Failed to add category to the database'}), 500
+    finally:
+        if cursor:
+            cursor.close()
 
 
 @app.route("/api/downloads/json", methods=["GET"])

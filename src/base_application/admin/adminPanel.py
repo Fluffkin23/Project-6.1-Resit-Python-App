@@ -166,22 +166,24 @@ def adminPanel():
         category_name = entry_category_name.get()
 
         # Define the URL of the API endpoint
-        url = api_server_ip + "/api/categories"
+        url = f"{api_server_ip}/api/categories"
 
         # Prepare the data payload as a dictionary
         data = {'name': category_name}
 
-        # Send a POST request to the Flask API
-        response = requests.post(url, data=data)
+        # Use the json parameter of the requests.post method, which automatically
+        # encodes the dictionary to JSON, sets the correct Content-Type header,
+        # and sends the request as JSON
+        response = requests.post(url, json=data)
 
         # Process the response
         if response.status_code == 201:
             messagebox.showinfo("Success", "Category added successfully.")
-            # Optionally clear the entry widget after successful insert
+            # Optionally, clear the entry widget after successful insertion
             entry_category_name.delete(0, tk.END)
         else:
             # Display an error message if something goes wrong
-            messagebox.showerror("Error", "Failed to add category. Server responded with: " + response.text)
+            messagebox.showerror("Error", f"Failed to add category: {response.text}")
 
     # ---------------------------------------------------- Frame 1 --------------------------------------------------- #
     label = tk.Label(frame1, text="Admin Panel", font=("Inter", 24, "normal"), bg="#D9D9D9", fg="black", justify="left")
