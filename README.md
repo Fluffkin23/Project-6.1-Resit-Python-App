@@ -72,7 +72,7 @@ Ensure you have PyCharm 2023.3.4 or a compatible version installed to run the ap
 ### Running the Application:
 
 1. To start the application, run `main.py` to initialize the API server.
-2. Next, execute `parser.py`, followed by `registerPage.py` to launch the GUI.
+2. Next, execute `parser.py`, followed by `launcher.py` to launch the GUI.
 
 ### Creating a New Account:
 
