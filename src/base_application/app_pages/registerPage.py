@@ -1,6 +1,6 @@
 import json
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter import *
 import requests
 from src.base_application import api_server_ip
@@ -9,15 +9,18 @@ from src.base_application.utils import hash_password
 
 
 def register_page():
-    response = requests.get(api_server_ip + "/api/associations")
-    if response.status_code == 200:
-        data = response.json()
-        if data:  # Check if associations exist
-            # Navigate to user panel
-            create_window()
+    # response = requests.get(api_server_ip + "/api/associations")
+    # if response.status_code == 200:
+    #     data = response.json()
+    #     if data:  # Check if associations exist
+    #         # Ask the user if they want to create a new association or go to user panel
+    #         user_choice = messagebox.askyesno("Association Exists", "An association already exists. Do you want to create a new one?")
+    #         if not user_choice:
+    #             # Navigate to user panel
+    #             create_window()
+    #             return
 
-
-    # Create the main window
+    # If the user chooses to create a new association or if no associations exist, show the registration form
     root = tk.Tk()
     root.title("Register a user")
     root.geometry("1200x900")
@@ -33,7 +36,15 @@ def register_page():
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, json=json_data, headers=headers)
         # Navigate to user panel
-        create_window()
+        if response.status_code == 200:
+            create_window()
+            try:
+                root.destroy()
+            except tk.TclError as e:
+                print("Root window already destroyed:", e)
+
+        else:
+            messagebox.showerror("Error", "Couldn't register the user. Please try again.")
         return
 
     # Create a frame to hold the left section
@@ -84,4 +95,5 @@ def register_page():
     root.mainloop()
 
 
-register_page()
+if __name__ == "__main__":
+    register_page()

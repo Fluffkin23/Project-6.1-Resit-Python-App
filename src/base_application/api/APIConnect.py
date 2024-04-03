@@ -84,18 +84,15 @@ def get_all_transactions():
 def get_transactions_sql():
     try:
         cursor = postgre_connection.cursor()
-
-        # call a stored procedure
         cursor.execute('SELECT * FROM select_all_transaction()')
-
-        # Get all data from the stored procedure
         data = cursor.fetchall()
-
-        # Return data in JSON format
+        cursor.close()  # Close cursor
+        postgre_connection.commit()  # Commit to ensure the transaction is not left open
         return jsonify(data)
     except psycopg2.InterfaceError as error:
+        postgre_connection.rollback()  # Rollback in case of error
         error_message = str(error)
-        return jsonify({'error': error_message})
+        return jsonify({'error': error_message}), 500
 
 
 @app.route("/api/transactions", methods=["POST"])
@@ -245,7 +242,7 @@ def handle_associations():
             # close the cursor
             cursor.close()
 
-            return jsonify({'message': 'File inserted successfully'})
+            return jsonify({'message': 'Association inserted successfully'}), 200
         except (Exception, psycopg2.DatabaseError) as error:
             error_message = str(error)
             return jsonify({'error': error_message})

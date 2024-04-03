@@ -14,18 +14,30 @@ def login_admin_page():
     window.resizable(False, False)
 
     def login_button_click(username, password):
+        # Fetch the associations from the server
         response = requests.get(api_server_ip + "/api/associations")
         if response.status_code != 200:
             messagebox.showerror("Error", "Could not fetch data from the server")
             return
 
         try:
+            # Extract the list of associations from the response
             associations = response.json()
+
+            # Calculate the hashed password once to optimize
             hashed_password = hash_password(password)
+
+            # Flag to check if the login credentials match
             login_successful = False
 
+            # Loop through all associations to find a match for both username and hashed password
             for assoc in associations:
+                # messagebox.showinfo("assoc", assoc)
+                # messagebox.showinfo("current", username + ":" + hash_password(password))
+                # Each association is a list with the structure [accountID, name, password_hash]
                 _, assoc_username, assoc_password_hash = assoc
+
+                # Check if the provided username and the hashed password match any record
                 if assoc_username == username and hashed_password == assoc_password_hash:
                     login_successful = True
                     break
@@ -35,11 +47,14 @@ def login_admin_page():
                 adminPanel()
             else:
                 messagebox.showerror("Error", "Incorrect username or password")
+
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
 
-        if pass_entry.winfo_exists():
+        # Clear the password field after the check
+        if pass_entry:
             pass_entry.delete(0, tk.END)
+
     def back_button_click():
         window.destroy()
         from src.base_application.app_pages.userPanel import create_window
