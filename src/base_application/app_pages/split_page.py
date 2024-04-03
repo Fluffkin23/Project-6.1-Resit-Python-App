@@ -7,7 +7,7 @@ def create_split_page(transaction_id, transaction_details):
     split_window = tk.Toplevel()
     split_window.title("Split Transaction")
 
-    # Treeview setup and other UI elements here
+    # Treeview setup and other UI elements
 
     tk.Label(split_window, text="How Many People to Split?").grid(row=3, column=0, sticky="e")
     num_splits_entry = tk.Entry(split_window)
