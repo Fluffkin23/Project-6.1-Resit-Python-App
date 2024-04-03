@@ -64,6 +64,7 @@ def get_all_transactions():
     transactions_list = list(transactions_cursor)
     return Response(response=json_util.dumps(transactions_list), status=200, mimetype='application/json')
 
+
 @app.route("/api/transactions/sql", methods=["GET"])
 def get_transactions_sql():
     try:
@@ -80,7 +81,6 @@ def get_transactions_sql():
     except psycopg2.InterfaceError as error:
         error_message = str(error)
         return jsonify({'error': error_message})
-
 
 
 @app.route("/api/transactions", methods=["POST"])
@@ -251,6 +251,7 @@ def get_members():
             error_message = str(error)
             return jsonify({'error': error_message})
 
+
 @app.route("/api/members/<member_id>", methods=["DELETE"])
 def delete_member(member_id):
     try:
@@ -314,6 +315,7 @@ def download_xml():
     response.headers["Content-Disposition"] = 'attachment; filename=transactions.xml'
     return response
 
+
 @app.route("/api/transactions/join/<int:trans_id>", methods=["GET"])
 def transaction_by_id_join(trans_id):
     try:
@@ -327,6 +329,7 @@ def transaction_by_id_join(trans_id):
     except psycopg2.InterfaceError as error:
         error_message = str(error)
         return jsonify({'error': error_message})
+
 
 @app.route("/api/transactions/<int:trans_id>", methods=["GET", "PUT"])
 def transaction_by_id(trans_id):
