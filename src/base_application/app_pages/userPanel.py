@@ -5,8 +5,6 @@ from src.base_application.admin.adminLogin import login_admin_page
 from src.base_application import api_server_ip
 
 
-
-
 def create_window():
     selected_row = None
     """Create a Tkinter window with two equal sections."""
@@ -24,6 +22,10 @@ def create_window():
     def admin_login_button_click():
         root.destroy()
         login_admin_page()
+
+    def logout_button_click():
+        if root:
+            root.destroy()
 
     # Define a function to be called when a row of the table is clicked
     def on_click_table_row(event):
@@ -49,8 +51,6 @@ def create_window():
         from src.base_application.app_pages.transactionDetails import transaction_details
         transaction_details(selected_row)
 
-
-
     root.resizable(False, False)  # Prevent the window from being resized
 
     # Create a frame to hold the left section
@@ -61,6 +61,10 @@ def create_window():
     label = tk.Label(left_frame, text="User Panel", font=("Inter", 24, "normal"), bg="#D9D9D9", fg="#000000",
                      justify="left")
     label.place(x=20, y=20, width=190, height=50)
+
+    button_logout = ttk.Button(left_frame, text="Logout", command=logout_button_click, style="RoundedButton.TButton")
+    button_logout.place(x=250, y=100, width=150, height=24)
+    # Adjust the text color to black
 
     # Create a label and text area for the Welcome message
     label = tk.Label(left_frame, text="Welcome", font=("Inter", 18, "bold"), bg="#D9D9D9", fg="#000000", justify="left",
@@ -77,7 +81,6 @@ def create_window():
                     font=("Inter", 14), borderwidth=0, bordercolor="#000000")
     style.map("RoundedButton.TButton", background=[("active", "#333333")])
 
-
     style = ttk.Style()
     style.configure("RoundedButton.TButton", padding=6, relief="flat",
                     background="#000000", foreground="#FFFFFF",
@@ -89,13 +92,15 @@ def create_window():
 
     button2.place(x=250, y=400, width=150, height=24)
 
-    balance_label = tk.Label(left_frame, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_label = tk.Label(left_frame, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000",
+                             justify="left")
     balance_label.place(x=70, y=500, width=160, height=24)
 
     balance_number = tk.Label(left_frame, text=balance, font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_number.place(x=250, y=500, width=160, height=24)
 
-    search_balance_label = tk.Label(left_frame, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    search_balance_label = tk.Label(left_frame, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9",
+                                    fg="#000000", justify="left")
     search_balance_label.place(x=70, y=600, width=240, height=24)
 
     search_summary_num = tk.Label(left_frame, text="", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
@@ -115,7 +120,6 @@ def create_window():
     table.heading("Description", text="Description")
     table.heading("Ref", text="Ref")
     table.heading("Amount", text="Amount")
-
 
     # Looping through the columns and get the heading
     for column in table["columns"]:
@@ -147,7 +151,7 @@ def create_window():
     # Pack the table into the frame and center it horizontally
     table.pack(fill="both", expand=False)  # Fill the frame with the table
     table.place(x=15, y=100)  # Place the table 15 pixels from the left and 100 pixels from the top
-    table.bind("<ButtonRelease-1>", on_click_table_row, "+") # Bind row selection
+    table.bind("<ButtonRelease-1>", on_click_table_row, "+")  # Bind row selection
     right_frame.pack_propagate(False)  # Prevent the frame from resizing to fit the table
 
     edit_button = ttk.Button(right_frame, text="Edit", command=lambda: edit_button_click())
@@ -156,7 +160,8 @@ def create_window():
     details_button = ttk.Button(right_frame, text="Details", command=lambda: details_button_click())
     details_button.place(x=485, y=35, width=100, height=30)
 
-    button1 = ttk.Button(left_frame, text="Keyboard Search", command=lambda: keyword_search_button(entry.get(), table, search_summary_num))
+    button1 = ttk.Button(left_frame, text="Keyboard Search",
+                         command=lambda: keyword_search_button(entry.get(), table, search_summary_num))
     button1.place(x=70, y=400, width=150, height=24)
 
     def on_closing():
@@ -181,7 +186,6 @@ def create_window():
         # Insert retrieved data into the table
         for result in keyword_table:
             table.insert("", "end", values=result)
-
 
     # Bind the on_closing function to the window close event
     root.protocol("WM_DELETE_WINDOW", on_closing)

@@ -9,6 +9,13 @@ from src.base_application.utils import hash_password
 
 
 def register_page():
+    response = requests.get(api_server_ip + "/api/associations")
+    if response.status_code == 200:
+        data = response.json()
+        if data:  # Check if associations exist
+            # Navigate to user panel
+            create_window()
+
 
     # Create the main window
     root = tk.Tk()
