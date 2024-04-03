@@ -44,7 +44,17 @@ def index():
             "deleteMemberSQL": "/api/deleteMember",
             "getAssociationSQL": "/api/getAssociation",
             "insertCategorySQL": "/api/insertCategory",
-            "getFilesSQL": "/api/getFile"
+            "getFilesSQL": "/api/getFile",
+            "transactions": "/api/transactions",
+            "downloadTransactionsByDate": "/api/downloadTransactionsByDate",
+            "transactions/filter": "/api/transactions/filter",
+            "associations": "/api/associations",
+            "members": "/api/members",
+            "getCategory": "/api/getCategory",
+            "categories": "/api/categories",
+            "transactions/<int:trans_id>": "/api/transactions/<int:trans_id>",
+            "transactions/search/<keyword>": "/api/transactions/search/<keyword>",
+            "members/<member_id>": "/api/members/<member_id>"
         }
     }
     return make_response(jsonify(answer), 200)
@@ -62,6 +72,8 @@ def test():
 def get_transactions_count():
     output = {"transactionsCount": transactions_collection.count_documents({})}
     return output
+
+
 
 
 @app.route("/api/downloadJSON", methods=["GET"])

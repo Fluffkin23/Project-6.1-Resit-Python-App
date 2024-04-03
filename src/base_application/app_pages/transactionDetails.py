@@ -8,10 +8,19 @@ from src.base_application import api_server_ip
 def transaction_details(trans_id):
     # -------------------- Functions ----------------------
     def get_transaction_json():
-        response = requests.get(api_server_ip + "/api/getTransactionOnIdJoin/" + trans_id)
-        if len(response.json()) == 0:
-            return
-        return response.json()[0]
+        try:
+            response = requests.get(api_server_ip + "/api/getTransactionOnIdJoin/" + trans_id)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            data = response.json()  # Parse JSON response
+            if not data:  # If the response is empty
+                return None
+            return data[0]  # Return the first item in the response
+        except requests.exceptions.RequestException as e:
+            print("Error fetching transaction data:", e)
+            return None  # Return None in case of any error
+        except (ValueError, IndexError) as e:  # Handle JSONDecodeError and IndexError
+            print("Error decoding JSON or accessing data:", e)
+            return None  # Return None if JSON decoding fails or data access fails
 
     trans = get_transaction_json()
     tuple_trans = (trans[0], trans[6], trans[2], trans[3], trans[1], trans[4], trans[5], trans[7], trans[14], trans[8], trans[11], trans[9])

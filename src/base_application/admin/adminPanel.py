@@ -9,6 +9,7 @@ from tkinter import filedialog
 
 
 import psycopg2
+from flask import jsonify
 from pywin.framework.editor import frame
 from self import self
 from bson import json_util
@@ -78,15 +79,17 @@ def adminPanel():
         edit_transaction_page_admin(selected_row)
 
     def retrieveDB():
+        # Your code to handle the GET request and return the response
         response = requests.get(api_server_ip + "/api/getTransactionsSQL")
         if len(response.json()) == 0:
-            return
-        # Convert JSON object into an array of tuples
+            return jsonify([])  # Return an empty JSON array if response is empty
+
         rows_out = []
         for entry in response.json():
             temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
             rows_out.append(tuple(temp_tuple))
-        return rows_out
+
+        return jsonify(rows_out)
 
     def details_button_click():
         global selected_row

@@ -1,7 +1,6 @@
 import json
 import tkinter as tk
 from tkinter import ttk
-from tkinter import *
 import requests
 from src.base_application import api_server_ip
 from userPanel import create_window
@@ -9,12 +8,18 @@ from src.base_application.utils import hash_password
 
 
 def register_page():
-    # Check if a user is already registered
-    jsonTest = requests.get(api_server_ip + "/api/getAssociation")
-    if len(jsonTest.json()) != 0:
-        # Navigate to user panel
-        create_window()
-        return
+    try:
+        # Check if a user is already registered
+        json_test = requests.get(api_server_ip + "/api/associations")
+        json_data = json_test.json()
+        if len(json_data) != 0:
+            # Navigate to user panel
+            create_window()
+            return
+    except json.decoder.JSONDecodeError:
+        # Handle case where response couldn't be parsed as JSON
+        print("Error: Server response couldn't be parsed as JSON.")
+        # Add appropriate error handling here, such as displaying an error message to the user or logging the error
 
     # Create the main window
     root = tk.Tk()
@@ -28,12 +33,21 @@ def register_page():
                    'name': name,
                    'password': hashed_pass}
         json_data = json.dumps(payload, indent=4)
-        url = api_server_ip + '/api/insertAssociation'
+        url = api_server_ip + '/api/associations'
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, json=json_data, headers=headers)
-        # Navigate to user panel
-        root.destroy()
-        create_window()
+
+        try:
+            response = requests.post(url, json=json_data, headers=headers)
+            response.raise_for_status()  # Raise exception for 4xx or 5xx status codes
+            # If the request is successful, navigate to the user panel
+            root.destroy()
+            create_window()
+        except requests.exceptions.HTTPError as http_err:
+            print(f'HTTP error occurred: {http_err}')  # Log the error
+            # Handle the error gracefully, e.g., display an error message to the user
+        except Exception as err:
+            print(f'Other error occurred: {err}')  # Log the error
+            # Handle the error gracefully, e.g., display an error message to the user
 
     # Create a frame to hold the left section
     left_frame = tk.Frame(root, width=600, height=900,  bg="#D9D9D9")  # Set the background color to grey
@@ -77,12 +91,6 @@ def register_page():
     button1 = ttk.Button(left_frame, text="Sign up", command=lambda: button_click(assoc_name_input.get(), passwd.get(), iban.get()))
 
     button1.place(x=160, y=600, width=300, height=60)
-
     # Start the main event loop
     root.mainloop()
-
-register_page()
-
-
-
-
+    register_page()

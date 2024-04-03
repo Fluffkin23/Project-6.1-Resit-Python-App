@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import requests
+from flask import jsonify
+
 from src.base_application.admin.adminLogin import login_admin_page
 from src.base_application import api_server_ip
 
@@ -8,6 +10,7 @@ from src.base_application import api_server_ip
 
 
 def create_window():
+    global selected_row
     selected_row = None
     """Create a Tkinter window with two equal sections."""
     # Create the main window
@@ -42,8 +45,7 @@ def create_window():
         from editTransaction import edit_transaction_page
         edit_transaction_page(selected_row)
 
-    def details_button_click():
-        global selected_row
+    def details_button_click(selected_row):
         if selected_row is None:
             return
         from src.base_application.app_pages.transactionDetails import transaction_details
@@ -153,7 +155,7 @@ def create_window():
     edit_button = ttk.Button(right_frame, text="Edit", command=lambda: edit_button_click())
     edit_button.place(x=15, y=35, width=100, height=30)
 
-    details_button = ttk.Button(right_frame, text="Details", command=lambda: details_button_click())
+    details_button = ttk.Button(right_frame, text="Details", command=lambda: details_button_click(selected_row))
     details_button.place(x=485, y=35, width=100, height=30)
 
     button1 = ttk.Button(left_frame, text="Keyboard Search", command=lambda: keyword_search_button(entry.get(), table, search_summary_num))
@@ -191,18 +193,17 @@ def create_window():
 
 
 def retrieveDB():
+    # Your code to handle the GET request and return the response
     response = requests.get(api_server_ip + "/api/getTransactionsSQL")
     if len(response.json()) == 0:
-        return
+        return jsonify([])  # Return an empty JSON array if response is empty
 
-    # Convert JSON object into an array of tuples
     rows_out = []
     for entry in response.json():
         temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
         rows_out.append(tuple(temp_tuple))
 
-    return rows_out
-
+    return jsonify(rows_out)
 
 def retrieveDB_keyword_search(keyword):
     response = requests.get(api_server_ip + "/api/searchKeyword/" + str(keyword))
