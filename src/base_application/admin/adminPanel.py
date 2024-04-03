@@ -12,6 +12,65 @@ from src.base_application.app_pages.fileUpload import main
 import requests
 from src.base_application import api_server_ip
 import xml.etree.ElementTree as ET
+<<<<<<< Updated upstream
+=======
+selected_row = None
+
+
+def open_split_window(transaction_id):
+    split_window = tk.Toplevel()
+    split_window.title("Split Transaction")
+
+    tk.Label(split_window, text="Number of ways to split:").pack()
+    split_count_entry = tk.Entry(split_window)
+    split_count_entry.pack()
+
+    # When the button is pressed, retrieve the value and proceed with the split logic
+    confirm_button = tk.Button(split_window, text="Confirm",
+                               command=lambda: confirm_split(transaction_id, split_count_entry.get()))
+    confirm_button.pack()
+
+    # Define confirm_split inside open_split_window for now, you can move it out later if needed
+    def confirm_split(transaction_id, split_count):
+        try:
+            num_splits = int(split_count)
+            if num_splits < 1:
+                raise ValueError("Number of splits must be greater than 0.")
+            # Here we assume you have a way to get the transaction amount
+            # Replace get_transaction_amount with the actual way you get the amount
+            amount = get_transaction_amount(transaction_id)  # You need to define this function
+            split_amount = round(amount / num_splits, 2)
+            messagebox.showinfo("Split Result", f"Transaction {transaction_id} will be split into {num_splits} parts, each part should be: {split_amount}")
+            split_window.destroy()
+        except ValueError as e:
+            messagebox.showerror("Error", f"Invalid input: {e}")
+
+    confirm_button = tk.Button(split_window, text="Confirm",
+                               command=lambda: confirm_split(transaction_id, split_count_entry.get()))
+    confirm_button.pack()
+
+
+
+
+def split_button_click():
+    global selected_row
+    if selected_row is None:
+        messagebox.showwarning("Selection Needed", "Please select a transaction to split.")
+        return
+
+    # Here we get the transaction details and pass them to the split window
+    transaction_details = get_transaction_details(selected_row)  # This needs to be defined somewhere
+
+    if transaction_details:
+        # Now we open the split window, but only once
+        open_split_window(selected_row)
+    else:
+        messagebox.showerror("Error", "Failed to retrieve transaction details.")
+
+
+
+
+>>>>>>> Stashed changes
 
 
 def adminPanel():

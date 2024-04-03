@@ -9,7 +9,7 @@ from src.base_application.utils import hash_password
 
 
 def register_page():
-    # Check if a user is already registered
+    # Check if a user is already registered122
     jsonTest = requests.get(api_server_ip + "/api/getAssociation")
     if len(jsonTest.json()) != 0:
         # Navigate to user panel
