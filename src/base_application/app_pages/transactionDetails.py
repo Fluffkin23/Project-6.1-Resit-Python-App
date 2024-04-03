@@ -8,7 +8,7 @@ from src.base_application import api_server_ip
 def transaction_details(trans_id):
     # -------------------- Functions ----------------------
     def get_transaction_json():
-        response = requests.get(api_server_ip + "/api/transactions/" + str(trans_id))
+        response = requests.get(api_server_ip + "/api/transactions/join" + str(trans_id))
         if len(response.json()) == 0:
             return
         return response.json()[0]

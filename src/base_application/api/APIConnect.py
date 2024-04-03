@@ -207,26 +207,68 @@ def handle_associations():
             return jsonify({'error': error_message})
 
 
-@app.route("/api/members", methods=["GET"])
+@app.route("/api/members", methods=["GET, POST"])
 def get_members():
-    cursor = postgre_connection.cursor()
-    cursor.execute("SELECT * FROM members")
-    members = cursor.fetchall()
-    return jsonify(members)
+    if request.method == "GET":
+        try:
+            cursor = postgre_connection.cursor()
+            # call a stored procedure
+            cursor.execute('SELECT * FROM select_all_member()')
 
+            # Get all data from the stored procedure
+            data = cursor.fetchall()
+
+            # Return data in JSON format
+            return jsonify(data)
+        except psycopg2.InterfaceError as error:
+            error_message = str(error)
+            return jsonify({'error': error_message})
+    elif request.method == "POST":
+        try:
+            # Get the JSON file from the POST request
+            json_temp = request.get_json()
+            json_data = json.loads(json_temp)
+            # Validate with schema
+            if not validate_member_json(json_data):
+                jsonify({'Error': 'Error Occured'})
+
+            name = json_data['name']
+            email = json_data['email']
+
+            cursor = postgre_connection.cursor()
+
+            # call a stored procedure
+            cursor.execute('CALL insert_into_member(%s,%s)', (name, email))
+
+            # commit the transaction
+            postgre_connection.commit()
+
+            # close the cursor
+            cursor.close()
+
+            return jsonify({'message': 'Member saved successfully'})
+        except (Exception, psycopg2.DatabaseError) as error:
+            error_message = str(error)
+            return jsonify({'error': error_message})
 
 @app.route("/api/members/<member_id>", methods=["DELETE"])
 def delete_member(member_id):
-    # Assuming function to delete member based on member_id
-    cursor = postgre_connection.cursor()
-    cursor.execute("DELETE FROM members WHERE id = %s RETURNING *", (member_id,))
-    deleted_member = cursor.fetchone()
-    postgre_connection.commit()
+    try:
+        member_id = request.args.get('memberid')
+        cursor = postgre_connection.cursor()
 
-    if deleted_member:
-        return jsonify({'message': 'Member deleted successfully'}), 200
-    else:
-        return jsonify({'error': 'Member not found'}), 404
+        # call a stored procedure
+        cursor.execute('CALL delete_member(%s)', (member_id,))
+
+        # commit the procedure
+        postgre_connection.commit()
+
+        # close the cursor
+        cursor.close()
+
+        return jsonify({'message': 'Member removed'})
+    except (Exception, psycopg2.DatabaseError) as error:
+        return jsonify({'message': str(error)})
 
 
 @app.route("/api/categories", methods=["GET", "POST"])
@@ -272,26 +314,61 @@ def download_xml():
     response.headers["Content-Disposition"] = 'attachment; filename=transactions.xml'
     return response
 
+@app.route("/api/transactions/join/<int:trans_id>", methods=["GET"])
+def transaction_by_id_join(trans_id):
+    try:
+        cursor = postgre_connection.cursor()
+
+        cursor.execute('select * from full_join_view where transactionid = %s', (int(trans_id),))
+
+        data = cursor.fetchall()
+
+        return jsonify(data)
+    except psycopg2.InterfaceError as error:
+        error_message = str(error)
+        return jsonify({'error': error_message})
 
 @app.route("/api/transactions/<int:trans_id>", methods=["GET", "PUT"])
 def transaction_by_id(trans_id):
     if request.method == "GET":
-        transaction = transactions_collection.find_one({"_id": trans_id})
-        if transaction:
-            return Response(
-                response=json_util.dumps(transaction),
-                status=200,
-                mimetype='application/json'
-            )
-        else:
-            return jsonify({'error': 'Transaction not found'}), 404
+        try:
+            cursor = postgre_connection.cursor()
+
+            cursor.execute('SELECT * FROM select_transaction_on_id(%s)', (int(trans_id),))
+
+            data = cursor.fetchall()
+
+            return jsonify(data)
+        except psycopg2.InterfaceError as error:
+            error_message = str(error)
+            return jsonify({'error': error_message})
     elif request.method == "PUT":
-        updated_data = request.json
-        result = transactions_collection.update_one({"_id": trans_id}, {"$set": updated_data})
-        if result.matched_count:
-            return jsonify({'message': 'Transaction updated successfully'}), 200
-        else:
-            return jsonify({'error': 'Transaction not found'}), 404
+        try:
+            cursor = postgre_connection.cursor()
+            # Get data from a post request
+            transactionID = request.form.get('trans_id')
+            description = request.form.get('desc')
+            categoryID = request.form.get('category')
+            memberID = request.form.get('member')
+            cursor = postgre_connection.cursor()
+
+            if categoryID == "None":
+                categoryID = None
+            else:
+                categoryID = int(categoryID)
+
+            if memberID == "None":
+                memberID = None
+            else:
+                memberID = int(memberID)
+
+            cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
+                transactionID, description, categoryID, memberID))
+
+            return jsonify({'message': 'Transaction Updated'})
+        except psycopg2.InterfaceError as error:
+            error_message = str(error)
+            return jsonify({'error': error_message})
 
 
 # Send a POST request with the file path to this function
