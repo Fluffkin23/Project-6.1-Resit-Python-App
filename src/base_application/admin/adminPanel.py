@@ -34,7 +34,7 @@ def adminPanel():
 
     # Get balance from db
     balance = "No data"
-    response = requests.get(api_server_ip + "/api/getFile")
+    response = requests.get(api_server_ip + "/api/files")
     if len(response.json()) != 0:
         balance = response.json()[0][4]
 
@@ -71,7 +71,7 @@ def adminPanel():
         edit_transaction_page_admin(selected_row)
 
     def retrieveDB():
-        response = requests.get(api_server_ip + "/api/getTransactionsSQL")
+        response = requests.get(api_server_ip + "/api/transactions/sql")
         if len(response.json()) == 0:
             return
         # Convert JSON object into an array of tuples
@@ -89,7 +89,7 @@ def adminPanel():
         transaction_details(selected_row)
 
     def retrieveDB_keyword_search(keyword):
-        response = requests.get(api_server_ip + "/api/searchKeyword/" + str(keyword))
+        response = requests.get(api_server_ip + "/api/transactions/search/" + str(keyword))
         if len(response.json()) == 0:
             return
         # Convert JSON object into an array of tuples
@@ -107,7 +107,7 @@ def adminPanel():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
 
-        url = f"{api_server_ip}/api/getTransactions?start_date={start_date}&end_date={end_date}"
+        url = f"{api_server_ip}/api/downloads/json?start_date={start_date}&end_date={end_date}"
 
         try:
             response = requests.get(url)
@@ -128,7 +128,7 @@ def adminPanel():
     def get_xml_button_click():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
-        url = f"{api_server_ip}/api/getTransactions?start_date={start_date}&end_date={end_date}"
+        url = f"{api_server_ip}/api/downloads/xml?start_date={start_date}&end_date={end_date}"
         try:
             response = requests.get(url)
             if response.status_code == 200:
@@ -166,7 +166,7 @@ def adminPanel():
         category_name = entry_category_name.get()
 
         # Define the URL of the API endpoint
-        url = api_server_ip + "/api/insertCategory"
+        url = api_server_ip + "/api/categories"
 
         # Prepare the data payload as a dictionary
         data = {'name': category_name}

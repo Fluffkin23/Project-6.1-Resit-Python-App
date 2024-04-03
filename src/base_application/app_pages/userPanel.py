@@ -17,7 +17,7 @@ def create_window():
 
     # Get balance from db
     balance = "No data"
-    response = requests.get(api_server_ip + "/api/getFile")
+    response = requests.get(api_server_ip + "/api/files")
     if len(response.json()) != 0:
         balance = response.json()[0][4]
 
@@ -191,21 +191,22 @@ def create_window():
 
 
 def retrieveDB():
-    response = requests.get(api_server_ip + "/api/getTransactionsSQL")
+    response = requests.get(api_server_ip + "/api/transactions/sql")
     if len(response.json()) == 0:
-        return
+        return []
 
     # Convert JSON object into an array of tuples
     rows_out = []
     for entry in response.json():
-        temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
-        rows_out.append(tuple(temp_tuple))
+        if isinstance(entry, list) and len(entry) >= 7:
+            temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
+            rows_out.append(tuple(temp_tuple))
 
     return rows_out
 
 
 def retrieveDB_keyword_search(keyword):
-    response = requests.get(api_server_ip + "/api/searchKeyword/" + str(keyword))
+    response = requests.get(api_server_ip + "/api/transactions/search/" + str(keyword))
     if len(response.json()) == 0:
         return
 

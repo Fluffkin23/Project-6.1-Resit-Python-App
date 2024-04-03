@@ -7,7 +7,7 @@ from src.base_application import api_server_ip
 
 def edit_transaction_page(transaction_id):
     def get_members():
-        response = requests.get(api_server_ip + "/api/getMembers")
+        response = requests.get(api_server_ip + "/api/members")
         if len(response.json()) == 0:
             return
 
@@ -19,7 +19,7 @@ def edit_transaction_page(transaction_id):
         return members
 
     def get_category():
-        response = requests.get(api_server_ip + "/api/getCategory")
+        response = requests.get(api_server_ip + "/api/categories")
         if len(response.json()) == 0:
             return
 
@@ -30,7 +30,7 @@ def edit_transaction_page(transaction_id):
         return category
 
     def get_transaction_json():
-        response = requests.get(api_server_ip + "/api/getTransactionOnId/" + transaction_id)
+        response = requests.get(api_server_ip + "/api/transactions/" + str(transaction_id))
         if len(response.json()) == 0:
             return
 
@@ -111,7 +111,7 @@ def edit_transaction_page(transaction_id):
 
         # Save to DB
         payload = {'trans_id': transaction_id, 'desc': desc, 'category': category_out, 'member': member_out}
-        response = requests.put(api_server_ip + "/api/updateTransaction", data=payload)
+        response = requests.put(api_server_ip + "/api/transactions", data=payload)
         back_button_click()
 
     # Start the window
@@ -120,7 +120,7 @@ def edit_transaction_page(transaction_id):
 
 def edit_transaction_page_admin(transaction_id):
     def get_members():
-        response = requests.get(api_server_ip + "/api/getMembers")
+        response = requests.get(api_server_ip + "/api/members")
         if len(response.json()) == 0:
             return
 
@@ -132,7 +132,7 @@ def edit_transaction_page_admin(transaction_id):
         return members
 
     def get_category():
-        response = requests.get(api_server_ip + "/api/getCategory")
+        response = requests.get(api_server_ip + "/api/categories")
         if len(response.json()) == 0:
             return
 
@@ -143,7 +143,7 @@ def edit_transaction_page_admin(transaction_id):
         return category
 
     def get_transaction_json():
-        response = requests.get(api_server_ip + "/api/getTransactionOnId/" + transaction_id)
+        response = requests.get(api_server_ip + "/api/transactions/" + str(transaction_id))
         if len(response.json()) == 0:
             return
 
@@ -224,7 +224,7 @@ def edit_transaction_page_admin(transaction_id):
 
         # Save to DB
         payload = {'trans_id': transaction_id, 'desc': desc, 'category': category_out, 'member': member_out}
-        response = requests.put(api_server_ip + "/api/updateTransaction", data=payload)
+        response = requests.put(api_server_ip + "/api/transactions", data=payload)
         back_button_click()
 
     # Start the window

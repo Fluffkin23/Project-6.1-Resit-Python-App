@@ -14,7 +14,7 @@ def manage_members():
 
     # connect to the database
     def retrieveDB():
-        response = requests.get(api_server_ip + "/api/getMembers")
+        response = requests.get(api_server_ip + "/api/members")
         if len(response.json()) == 0:
             return
 
@@ -101,7 +101,7 @@ def manage_members():
             return
         data_params = {'memberid': str(selected_row)}
         # Update DB
-        response = requests.delete(api_server_ip + "/api/deleteMember", params=data_params)
+        response = requests.delete(api_server_ip + "/api/members", params=data_params)
         print(response.text)
         rows = retrieveDB()
         table.delete(*table.get_children())

@@ -32,7 +32,7 @@ class FileWatcher:
     def update_balance(self):
         try:
             # API call to get the new balance after file upload
-            balance_response = requests.get(api_server_ip + "/api/getFile")
+            balance_response = requests.get(api_server_ip + "/api/files")
             balance_data = balance_response.json()
             new_total_balance = sum(float(file_data[4]) for file_data in balance_data if len(file_data) > 4)
             return new_total_balance

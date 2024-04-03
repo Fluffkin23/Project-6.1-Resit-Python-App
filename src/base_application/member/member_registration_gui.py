@@ -31,7 +31,7 @@ def member_registration():
                     }
                     members_json = json.dumps(members_json, indent=4)
                     print(members_json)
-                    url = api_server_ip + '/api/insertMemberSQL'
+                    url = api_server_ip + '/api/members'
                     headers = {'Content-Type': 'application/json'}
                     response = requests.post(url, json=members_json, headers=headers)
                     email_entry.delete(first=0, last=255) # will delete what is from position 0 to 255
