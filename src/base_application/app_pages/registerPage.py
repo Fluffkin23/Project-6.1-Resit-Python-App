@@ -10,16 +10,23 @@ from src.base_application.utils import hash_password
 def register_page():
     try:
         # Check if a user is already registered
-        json_test = requests.get(api_server_ip + "/api/associations")
-        json_data = json_test.json()
+        response = requests.get(api_server_ip + "/api/associations")
+        response.raise_for_status()  # Raise exception for 4xx or 5xx status codes
+        json_data = response.json()
         if len(json_data) != 0:
             # Navigate to user panel
             create_window()
             return
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')  # Log the error
+        # Handle the error gracefully, e.g., display an error message to the user
     except json.decoder.JSONDecodeError:
-        # Handle case where response couldn't be parsed as JSON
         print("Error: Server response couldn't be parsed as JSON.")
+        # Handle case where response couldn't be parsed as JSON
         # Add appropriate error handling here, such as displaying an error message to the user or logging the error
+    except Exception as err:
+        print(f'Other error occurred: {err}')  # Log the error
+        # Handle the error gracefully, e.g., display an error message to the user
 
     # Create the main window
     root = tk.Tk()
@@ -32,12 +39,12 @@ def register_page():
         payload = {'accountID': iban,
                    'name': name,
                    'password': hashed_pass}
-        json_data = json.dumps(payload, indent=4)
+
         url = api_server_ip + '/api/associations'
         headers = {'Content-Type': 'application/json'}
 
         try:
-            response = requests.post(url, json=json_data, headers=headers)
+            response = requests.post(url, json=payload, headers=headers)
             response.raise_for_status()  # Raise exception for 4xx or 5xx status codes
             # If the request is successful, navigate to the user panel
             root.destroy()
@@ -93,4 +100,4 @@ def register_page():
     button1.place(x=160, y=600, width=300, height=60)
     # Start the main event loop
     root.mainloop()
-    register_page()
+register_page()

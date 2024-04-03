@@ -16,7 +16,7 @@ def login_admin_page():
 
     def login_button_click(password):
         # Get password from DB
-        json_resp = requests.get(api_server_ip + "/api/getAssociation")
+        json_resp = requests.get(api_server_ip + "/api/associations")
         if len(json_resp.json()) == 0:
             # Make pop-up UNKNOWN ERROR
             messagebox.showerror("Error", "Unknown error")

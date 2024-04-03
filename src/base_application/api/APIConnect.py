@@ -42,7 +42,6 @@ def index():
             "insertMemberSQL": "/api/insertMemberSQL/<name>/<email>",
             "updateTransactionSQL": "/api/updateTransactionSQL/<transaction_id>",
             "deleteMemberSQL": "/api/deleteMember",
-            "getAssociationSQL": "/api/getAssociation",
             "insertCategorySQL": "/api/insertCategory",
             "getFilesSQL": "/api/getFile",
             "transactions": "/api/transactions",
@@ -54,7 +53,8 @@ def index():
             "categories": "/api/categories",
             "transactions/<int:trans_id>": "/api/transactions/<int:trans_id>",
             "transactions/search/<keyword>": "/api/transactions/search/<keyword>",
-            "members/<member_id>": "/api/members/<member_id>"
+            "members/<member_id>": "/api/members/<member_id>",
+            "getTransactionsSQL": "/api/getTransactionsSQL"
         }
     }
     return make_response(jsonify(answer), 200)
@@ -120,12 +120,12 @@ def downloadXML():
     return response
 
 
-@app.route('/api/transactions', methods=['GET'])
-def get_transactions():
-    # Here you should replace the following line with the actual call to your database or API
-    response = requests.get("your_api_server_ip_here" + "/api/getTransactions")
-    response.raise_for_status()
-    return jsonify(response.json())
+# @app.route('/api/transactions', methods=['GET'])
+# def get_transactions():
+#     # Here you should replace the following line with the actual call to your database or API
+#     response = requests.get("your_api_server_ip_here" + "/api/getTransactions")
+#     response.raise_for_status()
+#     return jsonify(response.json())
 
 @app.route('/api/transactions/filter', methods=['POST'])
 def filter_transactions():

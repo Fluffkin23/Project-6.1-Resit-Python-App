@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import requests
 from flask import jsonify
-
+from src.base_application.api import app  # Assuming app is imported from your Flask application
 from src.base_application.admin.adminLogin import login_admin_page
 from src.base_application import api_server_ip
 
