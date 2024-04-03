@@ -37,12 +37,14 @@ def register_page():
         response = requests.post(url, json=json_data, headers=headers)
         # Navigate to user panel
         if response.status_code == 200:
-            create_window()
             try:
-                root.destroy()
-            except tk.TclError as e:
-                print("Root window already destroyed:", e)
-
+                create_window()
+            finally:
+                try:
+                    root.quit()
+                    root.destroy()
+                except tk.TclError as e:
+                    print("Root window already destroyed:", e)
         else:
             messagebox.showerror("Error", "Couldn't register the user. Please try again.")
         return
