@@ -9,6 +9,7 @@ from src.base_application import api_server_ip
 def create_window():
     selected_row = None
 
+    #did it push
     def destroy_window():
         if 'root' in globals() and root is not None:
             root.destroy()
