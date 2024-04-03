@@ -149,17 +149,32 @@ def download_transactions_by_date():
 
 @app.route("/api/transactions/search/<keyword>", methods=["GET"])
 def search_transactions(keyword):
-    transactions_cursor = transactions_collection.find({
-        "$text": {
-            "$search": keyword
-        }
-    })
-    transactions = list(transactions_cursor)
-    return Response(
-        response=json_util.dumps(transactions),
-        status=200,
-        mimetype='application/json'
-    )
+    try:
+        cursor = postgre_connection.cursor()
+
+        # Call the search_table2 function with a search term
+        cursor.execute("SELECT * FROM search_table2(%s)", (keyword,))
+
+        # Fetch the results from the function call
+        results = cursor.fetchall()
+        return jsonify(results)
+    except (Exception, psycopg2.DatabaseError) as error:
+        return jsonify({'message': error})
+
+
+# @app.route("/api/searchKeyword/<keyword>", methods=["GET"])
+# def search_keyword(keyword):
+#     transactions_cursor = transactions_collection.find({
+#         "$text": {
+#             "$search": keyword
+#         }
+#     })
+#     transactions = list(transactions_cursor)
+#     return Response(
+#         response=json_util.dumps(transactions),
+#         status=200,
+#         mimetype='application/json'
+#     )
 
 
 @app.route("/api/files/upload", methods=["POST"])
