@@ -2,6 +2,7 @@ import json
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 from datetime import datetime
+from json import JSONDecodeError
 
 import psycopg2
 from flask import jsonify, request, make_response, Flask, Response
@@ -221,7 +222,7 @@ def handle_associations():
             return jsonify({'error': error_message})
 
 
-@app.route("/api/members", methods=["GET, POST"])
+@app.route("/api/members", methods=["GET", "POST"])
 def get_members():
     if request.method == "GET":
         try:
@@ -239,12 +240,12 @@ def get_members():
             return jsonify({'error': error_message})
     elif request.method == "POST":
         try:
-            # Get the JSON file from the POST request
-            json_temp = request.get_json()
-            json_data = json.loads(json_temp)
+            # Get the JSON data from the POST request
+            json_data = request.get_json()
+
             # Validate with schema
             if not validate_member_json(json_data):
-                jsonify({'Error': 'Error Occured'})
+                return jsonify({'Error': 'Error Occurred'})
 
             name = json_data['name']
             email = json_data['email']
@@ -264,6 +265,9 @@ def get_members():
         except (Exception, psycopg2.DatabaseError) as error:
             error_message = str(error)
             return jsonify({'error': error_message})
+        except JSONDecodeError as error:
+            # Handle JSONDecodeError gracefully
+            return jsonify({'error': 'Invalid JSON format'})
 
 
 @app.route("/api/members/<member_id>", methods=["DELETE"])
@@ -293,43 +297,89 @@ def handle_categories():
             cursor = postgre_connection.cursor()
             cursor.execute("SELECT * FROM category")
             categories = cursor.fetchall()
+            cursor.close()
             return jsonify(categories), 200
         except psycopg2.Error as e:
             return jsonify({'error': 'Failed to fetch categories'}), 500
-        finally:
-            if cursor:
-                cursor.close()
+
     elif request.method == "POST":
         try:
             # Extract category name from the POST request
             data = request.get_json()
             category_name = data.get('name')
 
-            # Validate category_name if needed
+            # Validate category_name
             if not category_name:
                 return jsonify({'error': 'Category name is required'}), 400
 
             # Attempt to insert the category into the database
-            return insert_category_into_database(category_name)
+            cursor = postgre_connection.cursor()
+            sql_insert_category = "INSERT INTO Category (name) VALUES (%s)"
+            cursor.execute(sql_insert_category, (category_name,))
+            postgre_connection.commit()
+            cursor.close()
+
+            # Return success message
+            return jsonify({'message': 'Category added successfully'}), 201
+
+        except psycopg2.Error as e:
+            # Rollback the transaction in case of error
+            postgre_connection.rollback()
+            return jsonify({'error': 'Failed to add category to the database'}), 500
+
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
 
+@app.route("/api/insert_category_into_database", methods=["POST"])
 def insert_category_into_database(category_name):
-    cursor = None
     try:
+        # Creating a cursor object using the cursor() method
         cursor = postgre_connection.cursor()
-        cursor.execute("INSERT INTO category (name) VALUES (%s) RETURNING categoryid", (category_name,))
-        category_id = cursor.fetchone()[0]
+        # SQL statement for inserting a category into the Category table
+        sql_insert_category = "INSERT INTO Category (name) VALUES (%s)"
+
+        # Execute the SQL statement with the category name as parameter
+        cursor.execute(sql_insert_category, (category_name,))
+
+        # Commit the transaction
         postgre_connection.commit()
-        return jsonify({'message': 'Category added successfully', 'id': category_id}), 201
+
+        # Return True to indicate successful insertion
+        return True
     except psycopg2.Error as e:
+        # Print the error message
+        print("Error inserting category:", e)
+        # Rollback the transaction in case of error
         postgre_connection.rollback()
-        print(e)  # Log the exact error
-        return jsonify({'error': 'Failed to add category to the database'}), 500
+        # Return False to indicate failure
+        return False
     finally:
+        # Close the cursor if it was successfully opened
         if cursor:
             cursor.close()
+            print("PostgreSQL cursor is closed")
+
+@app.route("/api/insertCategory", methods=["POST"])
+def insert_category():
+    try:
+        # Get the category name from the POST request
+        category_name = request.json.get('name')
+
+        cursor = postgre_connection.cursor()
+
+        # Call a stored procedure to insert a category into the Category table
+        cursor.execute("CALL insert_into_category(%s)", (category_name,))
+
+        # Commit the transaction
+        postgre_connection.commit()
+
+        # Return success message
+        return jsonify({'message': 'Category added successfully'}), 201
+    except (Exception, psycopg2.Error) as error:
+        # Rollback the transaction in case of error
+        postgre_connection.rollback()
+        return jsonify({'error': str(error)}), 500
 
 
 @app.route("/api/downloads/json", methods=["GET"])
@@ -371,7 +421,7 @@ def transaction_by_id_join(trans_id):
         return jsonify({'error': error_message})
 
 
-@app.route("/api/transactions/<int:trans_id>", methods=["GET", "PUT"])
+@app.route("/api/transactions/<int:trans_id>", methods=["GET", "POST", "PUT"])
 def transaction_by_id(trans_id):
     if request.method == "GET":
         try:
@@ -385,35 +435,26 @@ def transaction_by_id(trans_id):
         except psycopg2.InterfaceError as error:
             error_message = str(error)
             return jsonify({'error': error_message})
-    elif request.method == "PUT":
+    elif request.method in ["POST", "PUT"]:
         try:
-            cursor = postgre_connection.cursor()
-            # Get data from a post request
-            transactionID = request.form.get('trans_id')
-            description = request.form.get('desc')
-            categoryID = request.form.get('category')
-            memberID = request.form.get('member')
+            # Get data from the request
+            description = request.json.get('desc')
+            categoryID = request.json.get('category')
+            memberID = request.json.get('member')
+
             cursor = postgre_connection.cursor()
 
-            if categoryID == "None":
-                categoryID = None
-            else:
-                categoryID = int(categoryID)
-
-            if memberID == "None":
-                memberID = None
-            else:
-                memberID = int(memberID)
+            # Handle None values
+            categoryID = int(categoryID) if categoryID != "None" else None
+            memberID = int(memberID) if memberID != "None" else None
 
             cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
-                transactionID, description, categoryID, memberID))
+                trans_id, description, categoryID, memberID))
 
             return jsonify({'message': 'Transaction Updated'})
         except psycopg2.InterfaceError as error:
             error_message = str(error)
             return jsonify({'error': error_message})
-
-
 # Send a POST request with the file path to this function
 
 @app.route("/api/insertFile", methods=["POST"])

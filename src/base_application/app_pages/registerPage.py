@@ -33,7 +33,6 @@ def register_page():
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, json=json_data, headers=headers)
         # Navigate to user panel
-        root.destroy()
         create_window()
         return
 

@@ -56,11 +56,16 @@ def adminPanel():
     # Define a function to be called when a row of the table is clicked
     def on_click_table_row(event):
         global selected_row
-        # Get the selected item
-        item = table.selection()[0]
-        # Get the values of the selected item
-        values = table.item(item, "values")
-        selected_row = values[0]
+        # Get the selected item if available
+        selected_item = table.selection()
+        if selected_item:
+            item = selected_item[0]
+            # Get the values of the selected item
+            values = table.item(item, "values")
+            selected_row = values[0]
+        else:
+            # Handle the case when no row is selected
+            selected_row = None
 
     def edit_button_click():
         global selected_row
@@ -338,8 +343,12 @@ def adminPanel():
         window.destroy()
 
     def keyword_search_button(keyword, table, widget):
+        # Initialize keyword_table
+        keyword_table = []
+
         # Clear existing rows in the table
         table.delete(*table.get_children())
+
         # Show all transactions if keyword entry field is empty
         if len(keyword) == 0:
             keyword_table = retrieveDB()
@@ -350,7 +359,7 @@ def adminPanel():
             sum_output = 0
             # Calculate total sum of money per keyword
             for tuple_entry in keyword_table:
-                sum_output = sum_output + float(tuple_entry[5])
+                sum_output += float(tuple_entry[5])
             widget.config(text=str(sum_output))
             widget.place(x=275, y=700, width=350, height=24)
 
@@ -374,13 +383,14 @@ def adminPanel():
         refresh_balance_label()
 
     def refresh_balance_label():
-        # Call the function to update the balance from FileWatcher
-        new_balance = parser.FileWatcher.update_balance()
+        # Create an instance of FileWatcher
+        watcher = parser.FileWatcher()
+        # Call the update_balance method on the instance
+        new_balance = watcher.update_balance()
         if new_balance is not None:
             balance_number.configure(text=str(new_balance))
         else:
             balance_number.config(text="Failed to update")
-
 
     # Bind the on_closing function to the window close event
     window.protocol("WM_DELETE_WINDOW", on_closing)

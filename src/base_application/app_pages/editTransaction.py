@@ -98,21 +98,29 @@ def edit_transaction_page(transaction_id):
 
     def back_button_click():
         window.destroy()
-        from src.base_application.app_pages.userPanel import create_window
-        create_window()
+        from src.base_application.admin.adminPanel import adminPanel
+        adminPanel()
 
     def get_input_save(category, member, desc):
+        # Ensure you're handling empty string values properly
         member_out = None
-        category_out = None
-        if member is not None:
+        if member != "":
             member_out = member.split("-")[0]
-        if category is not None:
+
+        category_out = None
+        if category != "":
             category_out = category.split("-")[0]
 
         # Save to DB
-        payload = {'trans_id': transaction_id, 'desc': desc, 'category': category_out, 'member': member_out}
-        response = requests.put(api_server_ip + "/api/transactions", data=payload)
-        back_button_click()
+        payload = {'desc': desc, 'category': category_out, 'member': member_out}
+        response = requests.put(api_server_ip + "/api/transactions/" + str(transaction_id), json=payload)
+
+        if response.status_code == 200:
+            # Transaction updated successfully
+            print("Transaction updated successfully")
+        else:
+            # Failed to update transaction
+            print("Failed to update transaction:", response.text)
 
     # Start the window
     window.mainloop()
@@ -215,17 +223,25 @@ def edit_transaction_page_admin(transaction_id):
         adminPanel()
 
     def get_input_save(category, member, desc):
+        # Ensure you're handling empty string values properly
         member_out = None
-        category_out = None
-        if member is not None:
+        if member != "":
             member_out = member.split("-")[0]
-        if category is not None:
+
+        category_out = None
+        if category != "":
             category_out = category.split("-")[0]
 
         # Save to DB
-        payload = {'trans_id': transaction_id, 'desc': desc, 'category': category_out, 'member': member_out}
-        response = requests.put(api_server_ip + "/api/transactions", data=payload)
-        back_button_click()
+        payload = {'desc': desc, 'category': category_out, 'member': member_out}
+        response = requests.put(api_server_ip + "/api/transactions/" + str(transaction_id), json=payload)
+
+        if response.status_code == 200:
+            # Transaction updated successfully
+            print("Transaction updated successfully")
+        else:
+            # Failed to update transaction
+            print("Failed to update transaction:", response.text)
 
     # Start the window
     window.mainloop()
