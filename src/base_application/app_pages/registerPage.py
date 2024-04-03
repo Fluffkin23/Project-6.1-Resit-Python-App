@@ -10,11 +10,13 @@ from src.base_application.utils import hash_password
 
 def register_page():
     # Check if a user is already registered
-    jsonTest = requests.get(api_server_ip + "/api/associations")
-    if jsonTest.status_code == 200 and jsonTest.text.strip():  # Check if response is successful and not empty
-        # Navigate to user panel
-        create_window()
-        return
+    response = requests.get(api_server_ip + "/api/associations")
+    if response.status_code == 200:
+        data = response.json()
+        if data:  # Check if associations exist
+            # Navigate to user panel
+            create_window()
+            return
 
     # Create the main window
     root = tk.Tk()
