@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import INSERT
+from tkinter import INSERT, messagebox
 
 import requests
 from src.base_application import api_server_ip
@@ -118,6 +118,7 @@ def edit_transaction_page(transaction_id):
         if response.status_code == 200:
             # Transaction updated successfully
             print("Transaction updated successfully")
+            messagebox.showinfo("Success", "Transaction updated successfully")
         else:
             # Failed to update transaction
             print("Failed to update transaction:", response.text)
@@ -239,9 +240,12 @@ def edit_transaction_page_admin(transaction_id):
         if response.status_code == 200:
             # Transaction updated successfully
             print("Transaction updated successfully")
+            messagebox.showinfo("Success", "Transaction updated successfully")
         else:
             # Failed to update transaction
             print("Failed to update transaction:", response.text)
+            messagebox.showerror("Failed to update transaction", response.text)
+
 
     # Start the window
     window.mainloop()

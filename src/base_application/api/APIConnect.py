@@ -104,6 +104,35 @@ def create_transaction():
     transactions_collection.insert_one(json_data)
     return jsonify({'message': 'Transaction created successfully'})
 
+@app.route("/api/transactions", methods=["PUT"])
+def update_transaction():
+    try:
+        cursor = postgre_connection.cursor()
+        # Get data from a post request
+        transactionID = request.form.get('trans_id')
+        description = request.form.get('desc')
+        categoryID = request.form.get('category')
+        memberID = request.form.get('member')
+        cursor = postgre_connection.cursor()
+
+        if categoryID == "None":
+            categoryID = None
+        else:
+            categoryID = int(categoryID)
+
+        if memberID == "None":
+            memberID = None
+        else:
+            memberID = int(memberID)
+
+        cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
+            transactionID, description, categoryID, memberID))
+
+        return jsonify({'message': 'Transaction Updated'})
+    except psycopg2.InterfaceError as error:
+        error_message = str(error)
+        return jsonify({'error': error_message})
+
 
 @app.route("/api/transactions/filter", methods=["GET"])
 def filter_transactions():

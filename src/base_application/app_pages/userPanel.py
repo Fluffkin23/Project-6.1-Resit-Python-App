@@ -72,8 +72,33 @@ def create_window():
                      justify="left")
     label.place(x=20, y=20, width=190, height=50)
 
-    button_logout = ttk.Button(left_frame, text="Logout", command=logout_button_click, style="RoundedButton.TButton")
-    button_logout.place(x=250, y=100, width=150, height=24)
+    # Enhancing the logout button with a better style and placement
+    def create_logout_button(frame):
+        # Define a style for the logout button
+        logout_button_style = ttk.Style()
+        logout_button_style.configure('Logout.TButton',
+                                      font=('Inter', 12, 'bold'),
+                                      foreground='black',  # Set text color to black
+                                      background='red',
+                                      borderwidth=1,
+                                      relief='raised')
+        logout_button_style.map('Logout.TButton',
+                                background=[('active', 'darkred')],
+                                foreground=[('active', 'black')])  # Ensure text remains black even when active
+
+        # Create the logout button with the defined style
+        logout_button = ttk.Button(frame,
+                                   text="Logout",
+                                   style='Logout.TButton',
+                                   command=logout_button_click)
+
+        # Place the logout button in the frame
+        logout_button.place(relx=0.9, rely=0.01, anchor='ne', width=100, height=40)
+
+    # Modify your existing code to include the creation of the styled logout button
+    # For example, in the place where you setup the left_frame:
+    create_logout_button(left_frame)
+
     # Adjust the text color to black
 
     # Create a label and text area for the Welcome message

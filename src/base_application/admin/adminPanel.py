@@ -95,14 +95,13 @@ def adminPanel():
 
     def retrieveDB_keyword_search(keyword):
         response = requests.get(api_server_ip + "/api/transactions/search/" + str(keyword))
-        if len(response.json()) == 0:
-            return
-        # Convert JSON object into an array of tuples
-        rows_out = []
-        for entry in response.json():
-            temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
-            rows_out.append(tuple(temp_tuple))
-        return rows_out
+        if response.status_code == 200 and response.json():
+            rows_out = []
+            for entry in response.json():
+                temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
+                rows_out.append(temp_tuple)
+            return rows_out
+        return []  # Ensure an empty list is returned if no data is found
 
     def get_json_button_click():
         root = tk.Tk()
@@ -384,7 +383,7 @@ def adminPanel():
 
     def refresh_balance_label():
         # Create an instance of FileWatcher
-        watcher = parser.FileWatcher()
+        watcher = parser.FileWatcher("../../MT940files")
         # Call the update_balance method on the instance
         new_balance = watcher.update_balance()
         if new_balance is not None:
