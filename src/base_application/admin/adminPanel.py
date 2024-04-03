@@ -107,7 +107,7 @@ def adminPanel():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
 
-        url = f"{api_server_ip}/api/downloads/json?start_date={start_date}&end_date={end_date}"
+        url = f"{api_server_ip}/api/transactions/filter?start_date={start_date}&end_date={end_date}"
 
         try:
             response = requests.get(url)
@@ -128,7 +128,7 @@ def adminPanel():
     def get_xml_button_click():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
-        url = f"{api_server_ip}/api/downloads/xml?start_date={start_date}&end_date={end_date}"
+        url = f"{api_server_ip}/api/transactions/filter?start_date={start_date}&end_date={end_date}"
         try:
             response = requests.get(url)
             if response.status_code == 200:

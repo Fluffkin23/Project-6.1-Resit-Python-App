@@ -25,7 +25,6 @@ def index():
                 "count": "/api/transactions/count",
                 "all": "/api/transactions",
                 "filter": "/api/transactions/filter",
-                "byDate": "/api/transactions/byDate",
                 "search": "/api/transactions/search/<keyword>",
                 "id": "/api/transactions/<int:trans_id>",
                 "update": "/api/transactions/<int:trans_id>",
@@ -42,11 +41,6 @@ def index():
             "categories": {
                 "all": "/api/categories",
                 "create": "/api/categories"
-            },
-            "downloads": {
-                "JSON": "/api/downloads/json",
-                "XML": "/api/downloads/xml",
-                "transactionsByDate": "/api/downloads/transactionsByDate"
             }
         }
     }
@@ -96,55 +90,31 @@ def create_transaction():
     return jsonify({'message': 'Transaction created successfully'})
 
 
-@app.route("/api/transactions/filter", methods=["POST"])
+@app.route("/api/transactions/filter", methods=["GET"])
 def filter_transactions():
-    data = request.get_json()
-    start_date_str = data.get('start_date')
-    end_date_str = data.get('end_date')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
-    if not (start_date_str and end_date_str):
-        return jsonify({'error': 'start_date and end_date are required'}), 400
+    query = {}
 
-    try:
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-
-        transactions_cursor = transactions_collection.find({
-            "date": {
-                "$gte": start_date,
-                "$lte": end_date
-            }
-        })
-
-        transactions = list(transactions_cursor)
-        return jsonify(transactions)
-
-    except ValueError as e:
-        return jsonify({'error': 'Invalid date format'}), 400
-
-
-@app.route("/api/transactions/byDate", methods=["GET"])
-def download_transactions_by_date():
-    date_str = request.args.get('date')
-
-    if not date_str:
-        return jsonify({'error': 'Date parameter is required'}), 400
+    if start_date and end_date:
+        query["transactions.date"] = {"$gte": start_date, "$lte": end_date}
 
     try:
-        date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        transactions_cursor = transactions_collection.find({
-            "date": date
-        })
-        transactions = list(transactions_cursor)
-
+        transactions_cursor = transactions_collection.find(query)
+        transactions_list = list(transactions_cursor)
         return Response(
-            response=json_util.dumps(transactions),
+            response=json_util.dumps(transactions_list),
             status=200,
             mimetype='application/json'
         )
-
-    except ValueError:
-        return jsonify({'error': 'Invalid date format'}), 400
+    except Exception as e:
+        print("Error retrieving or serializing transactions:", e)
+        return Response(
+            response=json_util.dumps({"error": "Internal Server Error"}),
+            status=500,
+            mimetype='application/json'
+        )
 
 
 @app.route("/api/transactions/search/<keyword>", methods=["GET"])
