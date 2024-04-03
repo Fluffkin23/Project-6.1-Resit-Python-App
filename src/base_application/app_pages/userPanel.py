@@ -1,3 +1,4 @@
+import json
 import tkinter as tk
 from tkinter import ttk
 import requests
@@ -7,6 +8,10 @@ from src.base_application import api_server_ip
 
 def create_window():
     selected_row = None
+
+    def destroy_window():
+        if 'root' in globals() and root is not None:
+            root.destroy()
     """Create a Tkinter window with two equal sections."""
     # Create the main window
     root = tk.Tk()
@@ -16,8 +21,13 @@ def create_window():
     # Get balance from db
     balance = "No data"
     response = requests.get(api_server_ip + "/api/files")
-    if len(response.json()) != 0:
-        balance = response.json()[0][4]
+    try:
+        data = response.json()
+        if len(data) != 0:
+            balance = data[0][4]
+    except json.decoder.JSONDecodeError:
+        # Handle the case where the response is empty or not in JSON format
+        balance = "No data"
 
     def admin_login_button_click():
         root.destroy()
