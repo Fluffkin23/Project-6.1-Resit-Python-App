@@ -12,7 +12,7 @@ def create_window():
     """Create a Tkinter window with two equal sections."""
     # Create the main window
     root = tk.Tk()
-    root.title("Sports Accounting - Register a user")
+    root.title("Sports Accounting - User Panel")
     root.geometry("1200x900")
 
     # Get balance from db

@@ -9,12 +9,6 @@ from src.base_application.utils import hash_password
 
 
 def register_page():
-    # Check if a user is already registered
-    jsonTest = requests.get(api_server_ip + "/api/associations")
-    if jsonTest.status_code == 200 and jsonTest.text.strip():  # Check if response is successful and not empty
-        # Navigate to user panel
-        create_window()
-        return
 
     # Create the main window
     root = tk.Tk()
@@ -34,13 +28,14 @@ def register_page():
         # Navigate to user panel
         root.destroy()
         create_window()
+        return
 
     # Create a frame to hold the left section
-    left_frame = tk.Frame(root, width=600, height=900,  bg="#D9D9D9")  # Set the background color to grey
+    left_frame = tk.Frame(root, width=600, height=900, bg="#D9D9D9")  # Set the background color to grey
     left_frame.pack(side="left", fill="both", expand=True)
 
     # Create a frame to hold the right section
-    right_frame = tk.Frame(root, width=600, height=900,  bg="#F0AFAF")  # Set the background color to pink
+    right_frame = tk.Frame(root, width=600, height=900, bg="#F0AFAF")  # Set the background color to pink
     right_frame.pack(side="right", fill="both", expand=True, padx=(0, 5))  # Add padding to prevent overlap
 
     # Headings
@@ -74,15 +69,13 @@ def register_page():
     iban = tk.Entry(left_frame)
     iban.place(x=180, y=390, width=300, height=30)
 
-    button1 = ttk.Button(left_frame, text="Sign up", command=lambda: button_click(assoc_name_input.get(), passwd.get(), iban.get()))
+    button1 = ttk.Button(left_frame, text="Sign up",
+                         command=lambda: button_click(assoc_name_input.get(), passwd.get(), iban.get()))
 
     button1.place(x=160, y=600, width=300, height=60)
 
     # Start the main event loop
     root.mainloop()
 
+
 register_page()
-
-
-
-
