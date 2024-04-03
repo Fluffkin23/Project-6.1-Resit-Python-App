@@ -16,30 +16,26 @@ def login_admin_page():
     window.resizable(False, False)
 
     def login_button_click(password):
-        ...
-        try:
-            json_resp = requests.post(api_server_ip + "/api/login/admin", data={"password": password})
-            if json_resp.status_code == 200:
-                try:
-                    data = json_resp.json()
-                    if len(data) == 0:
-                        # Handle case where response is empty
-                        messagebox.showerror("Error", "Invalid password")
-                        return
-                except json.decoder.JSONDecodeError:
-                    # Handle case where response is not in JSON format
-                    messagebox.showerror("Error", "Unexpected response from server")
-                    return
-            else:
-                # Handle non-200 status codes
-                messagebox.showerror("Error", "Unexpected response from server")
-                return
-        except requests.exceptions.RequestException as e:
-            # Handle request exception
-            messagebox.showerror("Error", f"Request error: {str(e)}")
+        # Get password from DB
+        json_resp = requests.get(api_server_ip + "/api/associations")
+        if len(json_resp.json()) == 0:
+            # Make pop-up UNKNOWN ERROR
+            messagebox.showerror("Error", "Unknown error")
             return
 
-
+        pass_from_db = json_resp.json()[0][2]
+        # Check credentials
+        if password == "":
+            messagebox.showerror("Error", "Please enter a password")
+            return
+        # Check if password matches the one from the database
+        if hash_password(password) == pass_from_db:
+            window.destroy()
+            adminPanel()
+        else:
+            # POP up incorrect password
+            pass_entry.delete(first=0, last=255)
+            messagebox.showerror("Error", "Incorrect password")
 
     def back_button_click():
         from src.base_application.app_pages.userPanel import create_window
