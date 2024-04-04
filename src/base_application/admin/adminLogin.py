@@ -9,9 +9,18 @@ from tkinter import messagebox
 
 def login_admin_page():
     window = tk.Tk()
-    window.geometry("1200x900")
     window.title("Sports Accounting - Admin Login")
     window.resizable(False, False)
+    def center_window(width, height):
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        window.geometry(f"{width}x{height}+{x}+{y}")
+
+    width = 1200
+    height = 900
+    center_window(width, height)
 
     def login_button_click(username, password):
         # Fetch the associations from the server

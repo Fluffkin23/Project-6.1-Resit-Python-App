@@ -2,18 +2,15 @@
 import json
 import xml.dom.minidom
 import tkinter as tk
-import xml
+from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
-from tkinter import ttk, messagebox
-from tkinter import filedialog
-
-from bson import json_util
 from tkcalendar import DateEntry
+import requests
+import xml.etree.ElementTree as ET
 
 from src.base_application.api import parser
 from src.base_application.member.manageMembers import manage_members
 from src.base_application.app_pages.fileUpload import main
-import requests
 from src.base_application import api_server_ip
 import xml.etree.ElementTree as ET
 
@@ -21,23 +18,36 @@ import xml.etree.ElementTree as ET
 def adminPanel():
     selected_row = None
     window = tk.Tk()
-    window.geometry("1200x900")
     window.title("Sports Accounting - Admin Panel")
+    window.resizable(False, False)
+
+    # Set window size to 80% of the screen resolution
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    window_width = 1200
+    window_height = 900
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width - window_width) // 2
+    y = (screen_height - window_height) // 2
+    window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
     window.resizable(False, False)
 
-    frame1 = tk.Frame(window, width=600, height=900, bg="#D9D9D9")
-    frame2 = tk.Frame(window, width=600, height=900, bg="#F0AFAF")
+    frame1 = tk.Frame(window, width=window_width / 2, height=window_height, bg="#D9D9D9")
+    frame2 = tk.Frame(window, width=window_width / 2, height=window_height, bg="#F0AFAF")
 
-    frame1.pack(side="left")
-    frame2.pack(side="right")
+    frame1.pack(side="left", fill="both", expand=True)
+    frame2.pack(side="right", fill="both", expand=True)
+
+    # Center the window on the screen
+    window.eval('tk::PlaceWindow . center')
 
     # Get balance from db
     balance = "No data"
     response = requests.get(api_server_ip + "/api/files")
     if len(response.json()) != 0:
         balance = response.json()[0][4]
-
 
     # --------------------------------------------------- Functions -------------------------------------------------- #
     def manage_members_button():
@@ -48,7 +58,6 @@ def adminPanel():
         main()
 
     def logout_button():
-        # create_window()
         window.destroy()
         from src.base_application.app_pages.userPanel import create_window
         create_window()
@@ -193,8 +202,6 @@ def adminPanel():
     label = tk.Label(frame1, text="Admin Panel", font=("Inter", 24, "normal"), bg="#D9D9D9", fg="black", justify="left")
     label.place(x=20, y=20, width=190, height=50)
 
-    label.config(anchor="nw", pady=0, padx=0, wraplength=0, height=0, width=0)
-
     line = tk.Label(frame1, text="_______________________________________________________",
                     font=("Inter", 18, "normal"), bg="#D9D9D9", fg="black", justify="left")
     line.place(x=61, y=180, width=450, height=30)
@@ -203,31 +210,16 @@ def adminPanel():
                        fg="black", justify="left")
     welcome.place(x=15, y=175, width=190, height=30)
 
-
-    # Category Name Entry Label
-    # label_category_name = tk.Label(frame1, text="Category Name", font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black",
-    #                                justify="left")
-    # label_category_name.place(x=75, y=300, width=180, height=30)  # Adjust y-coordinate as needed
-
-    # Category Name Entry Text Box
     entry_category_name = tk.Entry(frame1, font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black", justify="left")
-    entry_category_name.place(x=75, y=330, width=180, height=30)  # Adjust y-coordinate as needed
+    entry_category_name.place(x=75, y=330, width=180, height=30)
 
-    # Category Insertion Button
     button_insert_category = tk.Button(frame1, text="Insert Cost Center", font=("Inter", 12, "normal"), bg="#D9D9D9",
-                                       fg="black", justify="left", command=lambda: insert_category())
-    button_insert_category.place(x=300, y=330, width=180, height=30)  # Adjust y-coordinate as needed
+                                       fg="black", justify="left", command=insert_category)
+    button_insert_category.place(x=300, y=330, width=180, height=30)
 
-    button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left", command=lambda: logout_button())
+    button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left",
+                       command=logout_button)
     button.place(x=450, y=175, height=30)
-
-    # manageMembers = tk.Button(frame1, text="Manage Memberships", font=("Inter", 12, "normal"),
-    #                           bg="#D9D9D9", fg="black", justify="left", command= lambda: manage_members_button())
-    # manageMembers.place(x=75, y=300, width=180, height=30)
-    #
-    # upload = tk.Button(frame1, text="Upload MT940 File", font=("Inter", 12, "normal"),
-    #                    bg="#D9D9D9", fg="black", justify="left", command=lambda: upload_button_click())
-    # upload.place(x=300, y=300, width=180, height=30)
 
     searchBar = tk.Entry(frame1, font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black", justify="left")
     searchBar.place(x=75, y=400, width=180, height=30)
@@ -245,20 +237,22 @@ def adminPanel():
     end_date_picker.place(x=180, y=480, width=150, height=25)
 
     downloadJSONFile = tk.Button(frame1, text="Download Transactions in JSON", font=("Inter", 12, "normal"),
-                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_json_button_click())
+                                 bg="#D9D9D9", fg="black", justify="left", command=get_json_button_click)
     downloadJSONFile.place(x=35, y=550, width=250, height=30)
 
     downloadXMLFile = tk.Button(frame1, text="Download Transactions in XML", font=("Inter", 12, "normal"),
-                                bg="#D9D9D9", fg="black", justify="left", command=lambda: get_xml_button_click())
+                                bg="#D9D9D9", fg="black", justify="left", command=get_xml_button_click)
     downloadXMLFile.place(x=300, y=550, width=250, height=30)
 
-    balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000",
+                             justify="left")
     balance_label.place(x=35, y=600, width=160, height=24)
 
-    balance_number = tk.Label(frame1, text = balance ,font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_number = tk.Label(frame1, text=balance, font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_number.place(x=210, y=600, width=160, height=24)
 
-    search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9",
+                                    fg="#000000", justify="left")
     search_balance_label.place(x=35, y=700, width=240, height=24)
 
     search_summary_num = tk.Label(frame1, text="", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
@@ -315,13 +309,13 @@ def adminPanel():
     # Pack the table into the frame and center it horizontally
     table.pack(fill="both", expand=False)  # Fill the frame with the table
     table.place(x=15, y=100)  # Place the table 15 pixels from the left and 100 pixels from the top
-    table.bind("<ButtonRelease-1>", on_click_table_row, "+") # Bind row selection
+    table.bind("<ButtonRelease-1>", on_click_table_row, "+")  # Bind row selection
     frame2.pack_propagate(False)  # Prevent the frame from resizing to fit the table
 
-    edit_button = ttk.Button(frame2, text="Edit", command=lambda: edit_button_click())
+    edit_button = ttk.Button(frame2, text="Edit", command=edit_button_click)
     edit_button.place(x=15, y=35, width=100, height=30)
 
-    details_button = ttk.Button(frame2, text="Details", command=lambda: details_button_click())
+    details_button = ttk.Button(frame2, text="Details", command=details_button_click)
     details_button.place(x=485, y=35, width=100, height=30)
 
     start_date_picker.bind("<<DateEntrySelected>>", lambda event: enable_download_buttons())

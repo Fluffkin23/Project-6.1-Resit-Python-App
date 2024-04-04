@@ -1,8 +1,20 @@
 import tkinter as tk
 from tkinter import INSERT, messagebox
-
 import requests
 from src.base_application import api_server_ip
+
+
+def center_window(window, width_percent=0.8, height_percent=0.8):
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+
+    window_width = int(screen_width * width_percent)
+    window_height = int(screen_height * height_percent)
+
+    x_coordinate = int((screen_width - window_width) / 2)
+    y_coordinate = int((screen_height - window_height) / 2)
+
+    window.geometry(f"{window_width}x{window_height}+{x_coordinate}+{y_coordinate}")
 
 
 def edit_transaction_page(transaction_id):
@@ -38,40 +50,39 @@ def edit_transaction_page(transaction_id):
 
     transaction_json = get_transaction_json()
 
-    # Create a standard size window of 1200x900 pixels, not resizable
+    # Create a window
     window = tk.Tk()
-    window.geometry("1200x900")
-    window.resizable(False, False)
     window.title("Sports Accounting - Edit Transaction")
-
-    # Two containers for other elements
-    frame_left = tk.Frame(window, width=600, height=900, bg="#D9D9D9")
-    frame_right = tk.Frame(window, width=600, height=900, bg="#F0AFAF")
-    frame_left.pack(side="left")
-    frame_right.pack(side="right")
+    center_window(window)  # Center the window on the screen
 
     # Get list of options for drop down menu
     options_list_category = get_category()
-    value_category = tk.StringVar(frame_left)
+    value_category = tk.StringVar(window)
     value_category.set("None")
     # TEMP
     options_list_members = get_members()
-    value_member = tk.StringVar(frame_left)
+    value_member = tk.StringVar(window)
     value_member.set("None")
+
+    # Two containers for other elements
+    frame_left = tk.Frame(window, bg="#D9D9D9")
+    frame_right = tk.Frame(window, bg="#F0AFAF")
+    frame_left.pack(side="left", fill="both", expand=True)
+    frame_right.pack(side="right", fill="both", expand=True)
 
     # Title of the window Admin Panel
     label_admin_panel = tk.Label(frame_left, text="Admin Panel", font=("Inter", 24, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_admin_panel.place(x=20, y=20, width=190, height=50)
+    label_admin_panel.pack(pady=(20, 0))
 
     # Edit Transaction Title
     label_edit_trans = tk.Label(frame_left, text="Edit Transaction", font=("Inter", 35, "normal"), fg="black", bg="#D9D9D9", justify="center")
-    label_edit_trans.place(x=0, y=90, width=600, height=140)
+    label_edit_trans.pack(pady=(40, 0))
 
     # Description Text Box and Label
     label_desc = tk.Label(frame_left, text="Description", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_desc.place(x=25, y=230, width=190, height=50)
+    label_desc.pack()
     textbox_description = tk.Text(frame_left, bg="#D9D9D9", bd=1, fg="black", state="normal", relief="solid")
-    textbox_description.place(x=50, y=290, height=200, width=500)
+    textbox_description.pack(pady=(10, 0), padx=20, fill="both", expand=True)
     description_trans = ""
     if transaction_json is not None:
         description_trans = transaction_json[3]
@@ -79,22 +90,22 @@ def edit_transaction_page(transaction_id):
 
     # Category/Member Menu and Label
     label_category = tk.Label(frame_left, text="Category", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_category.place(x=10, y=490, width=190, height=50)
+    label_category.pack(pady=(20, 0))
     optionmenu_category = tk.OptionMenu(frame_left, value_category, *options_list_category)
-    optionmenu_category.place(x=50, y=540, height=30, width=500)
+    optionmenu_category.pack(pady=(0, 20), padx=20, fill="x")
 
     label_member = tk.Label(frame_left, text="Member", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_member.place(x=10, y=570, width=190, height=50)
+    label_member.pack()
     optionmenu_member = tk.OptionMenu(frame_left, value_member, *options_list_members)
-    optionmenu_member.place(x=50, y=620, height=30, width=500)
+    optionmenu_member.pack(pady=(0, 20), padx=20, fill="x")
 
-    #Save Button
+    # Save Button
     button_save = tk.Button(frame_left, text="Save", font=("Inter", 20), bg="#F0AFAF", fg="black", bd=0, highlightthickness=0, activebackground="#B3B3B3", command=lambda: get_input_save(value_category.get(), value_member.get(), textbox_description.get(1.0, 'end-1c')))
-    button_save.place(x=50, y=700, width=500, height=50)
+    button_save.pack(pady=(0, 20), padx=20, fill="x")
 
-    #Back Button
+    # Back Button
     button_back = tk.Button(frame_left, text="Back", font=("Inter", 20), bg="white", fg="black", bd=0, highlightthickness=0, activebackground="#B3B3B3", command=lambda : back_button_click())
-    button_back.place(x=20, y=820, width=100, height=50)
+    button_back.pack(pady=(0, 20), padx=20, fill="x")
 
     def back_button_click():
         window.destroy()
@@ -122,6 +133,9 @@ def edit_transaction_page(transaction_id):
         else:
             # Failed to update transaction
             print("Failed to update transaction:", response.text)
+
+    # Ensure the window pops up on top of other windows
+    window.attributes('-topmost', True)
 
     # Start the window
     window.mainloop()
@@ -160,40 +174,39 @@ def edit_transaction_page_admin(transaction_id):
 
     transaction_json = get_transaction_json()
 
-    # Create a standard size window of 1200x900 pixels, not resizable
+    # Create a window
     window = tk.Tk()
-    window.geometry("1200x900")
-    window.resizable(False, False)
     window.title("Sports Accounting - Edit Transaction")
-
-    # Two containers for other elements
-    frame_left = tk.Frame(window, width=600, height=900, bg="#D9D9D9")
-    frame_right = tk.Frame(window, width=600, height=900, bg="#F0AFAF")
-    frame_left.pack(side="left")
-    frame_right.pack(side="right")
+    center_window(window)  # Center the window on the screen
 
     # Get list of options for drop down menu
     options_list_category = get_category()
-    value_category = tk.StringVar(frame_left)
+    value_category = tk.StringVar(window)
     value_category.set("None")
     # TEMP
     options_list_members = get_members()
-    value_member = tk.StringVar(frame_left)
+    value_member = tk.StringVar(window)
     value_member.set("None")
+
+    # Two containers for other elements
+    frame_left = tk.Frame(window, bg="#D9D9D9")
+    frame_right = tk.Frame(window, bg="#F0AFAF")
+    frame_left.pack(side="left", fill="both", expand=True)
+    frame_right.pack(side="right", fill="both", expand=True)
 
     # Title of the window Admin Panel
     label_admin_panel = tk.Label(frame_left, text="Admin Panel", font=("Inter", 24, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_admin_panel.place(x=20, y=20, width=190, height=50)
+    label_admin_panel.pack(pady=(20, 0))
 
     # Edit Transaction Title
     label_edit_trans = tk.Label(frame_left, text="Edit Transaction", font=("Inter", 35, "normal"), fg="black", bg="#D9D9D9", justify="center")
-    label_edit_trans.place(x=0, y=90, width=600, height=140)
+    label_edit_trans.pack(pady=(40, 0))
 
     # Description Text Box and Label
     label_desc = tk.Label(frame_left, text="Description", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_desc.place(x=25, y=230, width=190, height=50)
+    label_desc.pack()
     textbox_description = tk.Text(frame_left, bg="#D9D9D9", bd=1, fg="black", state="normal", relief="solid")
-    textbox_description.place(x=50, y=290, height=200, width=500)
+    textbox_description.pack(pady=(10, 0), padx=20, fill="both", expand=True)
     description_trans = ""
     if transaction_json is not None:
         description_trans = transaction_json[3]
@@ -201,22 +214,22 @@ def edit_transaction_page_admin(transaction_id):
 
     # Category/Member Menu and Label
     label_category = tk.Label(frame_left, text="Cost center", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    label_category.place(x=10, y=490, width=190, height=50)
+    label_category.pack(pady=(20, 0))
     optionmenu_category = tk.OptionMenu(frame_left, value_category, *options_list_category)
-    optionmenu_category.place(x=50, y=540, height=30, width=500)
+    optionmenu_category.pack(pady=(0, 20), padx=20, fill="x")
 
     # label_member = tk.Label(frame_left, text="Member", font=("Inter", 20, "normal"), fg="#575757", bg="#D9D9D9", justify="left")
-    # label_member.place(x=10, y=570, width=190, height=50)
+    # label_member.pack()
     # optionmenu_member = tk.OptionMenu(frame_left, value_member, *options_list_members)
-    # optionmenu_member.place(x=50, y=620, height=30, width=500)
+    # optionmenu_member.pack(pady=(0, 20), padx=20, fill="x")
 
-    #Save Button
+    # Save Button
     button_save = tk.Button(frame_left, text="Save", font=("Inter", 20), bg="#F0AFAF", fg="black", bd=0, highlightthickness=0, activebackground="#B3B3B3", command=lambda: get_input_save(value_category.get(), value_member.get(), textbox_description.get(1.0, 'end-1c')))
-    button_save.place(x=50, y=700, width=500, height=50)
+    button_save.pack(pady=(0, 20), padx=20, fill="x")
 
-    #Back Button
+    # Back Button
     button_back = tk.Button(frame_left, text="Back", font=("Inter", 20), bg="white", fg="black", bd=0, highlightthickness=0, activebackground="#B3B3B3", command=lambda : back_button_click())
-    button_back.place(x=20, y=820, width=100, height=50)
+    button_back.pack(pady=(0, 20), padx=20, fill="x")
 
     def back_button_click():
         window.destroy()
@@ -246,6 +259,8 @@ def edit_transaction_page_admin(transaction_id):
             print("Failed to update transaction:", response.text)
             messagebox.showerror("Failed to update transaction", response.text)
 
+    # Ensure the window pops up on top of other windows
+    window.attributes('-topmost', True)
 
     # Start the window
     window.mainloop()

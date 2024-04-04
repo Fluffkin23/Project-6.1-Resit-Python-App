@@ -1,5 +1,5 @@
 import json
-from tkinter import Tk, filedialog
+from tkinter import Tk, filedialog, CENTER
 from tkinter.ttk import Button, Label
 import requests
 from src.base_application import api_server_ip
@@ -10,7 +10,19 @@ class MainWindow:
     def __init__(self, master):
         self.master = master
         self.master.title("Sports Accounting - MT940 Parser")
-        self.master.wm_attributes("-topmost", 1)
+        self.master.attributes("-topmost", True)
+
+        # Center the window
+        self.master.eval('tk::PlaceWindow . center')
+
+        # Adjust window size to 80% of the screen resolution
+        screen_width = self.master.winfo_screenwidth()
+        screen_height = self.master.winfo_screenheight()
+        width = int(screen_width * 0.8)
+        height = int(screen_height * 0.8)
+        x_coordinate = (screen_width - width) // 2
+        y_coordinate = (screen_height - height) // 2
+        self.master.geometry(f"{width}x{height}+{x_coordinate}+{y_coordinate}")
 
         # Create the "Select Files" button
         self.select_files_button = Button(self.master, text="Select Files", command=self.select_files)
@@ -29,7 +41,8 @@ class MainWindow:
 
     def select_files(self):
         """Open a file dialog to select MT940 files."""
-        file_paths = filedialog.askopenfilenames(defaultextension=".sta", filetypes=[("MT940 Files", "*.sta"), ("All Files", "*.*")])
+        file_paths = filedialog.askopenfilenames(defaultextension=".sta",
+                                                 filetypes=[("MT940 Files", "*.sta"), ("All Files", "*.*")])
         self.selected_files_label.config(text="Selected Files: " + str(file_paths))
         self.file_paths = file_paths
 
@@ -57,11 +70,12 @@ class MainWindow:
         # Close Window
         self.master.destroy()
 
+
 def main():
     root = Tk()
-    root.geometry("400x200")
     MainWindow(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

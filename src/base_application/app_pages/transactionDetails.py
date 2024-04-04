@@ -1,10 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import *
 import json
 import requests
 from src.base_application import api_server_ip
-
 
 def transaction_details(trans_id):
     # -------------------- Functions ----------------------
@@ -38,17 +36,24 @@ def transaction_details(trans_id):
 
         # Create the Tkinter window and table
         window = tk.Tk()
-        window.geometry("1200x400")
-        window.resizable(False, False)
         window.title("Sports Accounting - Transaction Details")
 
-        left_frame = tk.Frame(window, width=1200, height=900, bg="#D9D9D9")
+        # Calculate the window size
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        width = int(0.8 * screen_width)
+        height = int(0.8 * screen_height)
+        window.geometry(f"{width}x{height}")
+
+        window.resizable(False, False)
+
+        left_frame = tk.Frame(window, width=width, height=height, bg="#D9D9D9")
         left_frame.pack(side="left")
 
         table = ttk.Treeview(left_frame, columns=("ID", "Date", "Details", "Description", "Ref", "Amount", "Currency",
                                                   "CategoryID", "Category", "MemberID", "Member", "Type"),
                              show="headings", style="Custom.Treeview")
-        table.place(x=40, y=9000, width=1100, height=300)
+        table.place(x=40, y=9000, width=int(0.9 * width), height=int(0.7 * height))
 
         # Add headings and columns...
         table.heading("ID", text="ID")
@@ -98,6 +103,8 @@ def transaction_details(trans_id):
         table.pack(fill="both", expand=False)
         table.place(x=20, y=20)
 
+        window.lift()  # Lift the window to the top after mainloop()
         window.mainloop()
     else:
         print("Error: Failed to retrieve transaction data from the API")
+

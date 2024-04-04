@@ -1,29 +1,28 @@
-import json
 import tkinter as tk
 from tkinter import ttk, messagebox
-from tkinter import *
 import requests
+import json
 from src.base_application import api_server_ip
 from userPanel import create_window
 from src.base_application.utils import hash_password
 
-
 def register_page():
-    # response = requests.get(api_server_ip + "/api/associations")
-    # if response.status_code == 200:
-    #     data = response.json()
-    #     if data:  # Check if associations exist
-    #         # Ask the user if they want to create a new association or go to user panel
-    #         user_choice = messagebox.askyesno("Association Exists", "An association already exists. Do you want to create a new one?")
-    #         if not user_choice:
-    #             # Navigate to user panel
-    #             create_window()
-    #             return
-
-    # If the user chooses to create a new association or if no associations exist, show the registration form
+    # Create the main window
     root = tk.Tk()
     root.title("Register a user")
-    root.geometry("1200x900")
+
+    # Function to center the window on the screen
+    def center_window(width, height):
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        root.geometry(f"{width}x{height}+{x}+{y}")
+
+    # Calculate the window size
+    width = int(0.8 * root.winfo_screenwidth())
+    height = int(0.8 * root.winfo_screenheight())
+    center_window(width, height)
 
     def button_click(name, password, iban):
         hashed_pass = hash_password(password)
@@ -41,14 +40,13 @@ def register_page():
            create_window()
         else:
             messagebox.showerror("Error", "Couldn't register the user. Please try again.")
-        return
 
     # Create a frame to hold the left section
-    left_frame = tk.Frame(root, width=600, height=900, bg="#D9D9D9")  # Set the background color to grey
+    left_frame = tk.Frame(root, width=width // 2, height=height, bg="#D9D9D9")  # Set the background color to grey
     left_frame.pack(side="left", fill="both", expand=True)
 
     # Create a frame to hold the right section
-    right_frame = tk.Frame(root, width=600, height=900, bg="#F0AFAF")  # Set the background color to pink
+    right_frame = tk.Frame(root, width=width // 2, height=height, bg="#F0AFAF")  # Set the background color to pink
     right_frame.pack(side="right", fill="both", expand=True, padx=(0, 5))  # Add padding to prevent overlap
 
     # Headings
@@ -87,9 +85,8 @@ def register_page():
 
     button1.place(x=160, y=600, width=300, height=60)
 
-    # Start the main event loop
+    root.lift()  # Lift the window to the top after mainloop()
     root.mainloop()
-
 
 if __name__ == "__main__":
     register_page()
