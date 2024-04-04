@@ -35,11 +35,14 @@ def register_page():
         headers = {'Content-Type': 'application/json'}
         try:
             response = requests.post(url, json=json_data, headers=headers)
-            if response.status_code == 200:
+            if response.ok:
                 root.destroy()
                 create_window()
             else:
-                error_message = response.json().get('error', 'Unknown error occurred')
+                if response.content:
+                    error_message = response.json().get('error', 'Unknown error occurred')
+                else:
+                    error_message = 'Empty response received'
                 messagebox.showerror("Error", f"Couldn't register the user. Error message: {error_message}")
         except requests.RequestException as e:
             messagebox.showerror("Error", f"Couldn't register the user. Error: {e}")
