@@ -199,8 +199,9 @@ def create_window():
             table.insert("", "end", values=result)
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
-    root.mainloop()
     root.lift()  # Lift the window to the top after mainloop()
+
+    root.mainloop()
 
 def retrieveDB():
     response = requests.get(api_server_ip + "/api/transactions/sql")

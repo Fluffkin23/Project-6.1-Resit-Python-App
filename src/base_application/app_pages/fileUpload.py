@@ -74,6 +74,7 @@ class MainWindow:
 def main():
     root = Tk()
     MainWindow(root)
+    root.lift()
     root.mainloop()
 
 

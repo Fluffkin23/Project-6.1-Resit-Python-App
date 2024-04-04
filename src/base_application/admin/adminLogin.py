@@ -102,4 +102,5 @@ def login_admin_page():
                             activebackground="#B3B3B3", command=back_button_click)
     back_button.place(x=20, y=700, width=82, height=24)
 
+    window.lift()  # Lift the window to the top after mainloop()
     window.mainloop()

@@ -136,7 +136,7 @@ def edit_transaction_page(transaction_id):
 
     # Ensure the window pops up on top of other windows
     window.attributes('-topmost', True)
-
+    window.lift()  # Lift the window to the top after mainloop()
     # Start the window
     window.mainloop()
 

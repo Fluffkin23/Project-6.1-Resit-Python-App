@@ -387,8 +387,6 @@ def adminPanel():
 
     # Bind the on_closing function to the window close event
     window.protocol("WM_DELETE_WINDOW", on_closing)
-
+    window.lift()  # Lift the window to the top after mainloop()
     # Start the main event loop
-    window.mainloop()
-    # ------------------------------------------------------ Run ----------------------------------------------------- #
     window.mainloop()

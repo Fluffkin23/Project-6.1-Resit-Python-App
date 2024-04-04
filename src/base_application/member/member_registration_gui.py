@@ -88,4 +88,5 @@ def member_registration():
     back_button.place(x=20, y=700, width=82, height=24)
 
     # run the main loop
+    window.lift()  # Lift the window to the top after mainloop()
     window.mainloop()

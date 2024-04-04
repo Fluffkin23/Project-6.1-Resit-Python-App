@@ -50,8 +50,9 @@ def launch_app():
     btn_user_panel = create_button(root, "Enter User Panel", on_user_panel)
     btn_admin_login = create_button(root, "Admin Login", on_admin_login)
 
-    root.mainloop()
     root.lift()  # Lift the window to the top after mainloop()
+
+    root.mainloop()
 
 if __name__ == "__main__":
     launch_app()

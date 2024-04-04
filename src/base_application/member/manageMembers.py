@@ -136,4 +136,5 @@ def manage_members():
     delete_button.place(x=450, y=850, width=100, height=30)
 
     # Start the main event loop
+    root.lift()  # Lift the window to the top after mainloop()
     root.mainloop()
