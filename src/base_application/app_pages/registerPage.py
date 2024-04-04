@@ -33,13 +33,16 @@ def register_page():
         json_data = json.dumps(payload, indent=4)
         url = api_server_ip + '/api/associations'
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, json=json_data, headers=headers)
-        # Navigate to user panel
-        if response.status_code == 200:
-           root.destroy()
-           create_window()
-        else:
-            messagebox.showerror("Error", "Couldn't register the user. Please try again.")
+        try:
+            response = requests.post(url, json=json_data, headers=headers)
+            if response.status_code == 200:
+                root.destroy()
+                create_window()
+            else:
+                error_message = response.json().get('error', 'Unknown error occurred')
+                messagebox.showerror("Error", f"Couldn't register the user. Error message: {error_message}")
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"Couldn't register the user. Error: {e}")
 
     # Create a frame to hold the left section
     left_frame = tk.Frame(root, width=width // 2, height=height, bg="#D9D9D9")  # Set the background color to grey
