@@ -17,21 +17,32 @@ def get_database():
 
 
 def get_collection():
+    """
+        Get the 'Transactions' collection from the database and print the first 5 transactions to inspect their structure.
+        """
+    # Get the database object
     namedb = get_database()
+    # Access the 'Transactions' collection
     transactions_collection = namedb["Transactions"]
     # Example: Print the first 5 transactions to inspect their structure
     for transaction in transactions_collection.find().limit(5):
         print(transaction)
-
+    # Return the transactions collection
     return transactions_collection
 
 
 def get_flask_app():
+    """
+        Create and return a Flask application instance.
+        """
     app = Flask(__name__)
     return app
 
 
 def get_connection_postgre():
+    """
+        Establish and return a connection to the PostgreSQL database.
+        """
     # Establishing the connection
     conn = psycopg2.connect(
 

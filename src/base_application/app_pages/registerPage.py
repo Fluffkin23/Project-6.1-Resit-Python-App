@@ -7,7 +7,7 @@ from src.base_application import api_server_ip
 from userPanel import create_window
 from src.base_application.utils import hash_password
 
-
+par
 def register_page():
     # Check if a user is already registered
     jsonTest = requests.get(api_server_ip + "/api/getAssociation")

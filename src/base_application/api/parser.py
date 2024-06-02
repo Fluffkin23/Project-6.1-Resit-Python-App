@@ -9,9 +9,21 @@ from src.base_application.utils import check_mt940_file, parse_mt940_file
 
 class FileWatcher:
     def __init__(self, watch_directory):
+        """
+            Initialize the FileWatcher class with the directory to watch.
+
+            Args:
+                watch_directory (str): The directory to monitor for file changes.
+        """
         self.watch_directory = watch_directory
 
     def on_created(self, event):
+        """
+            Handle the event when a file is created in the watched directory.
+
+            Args:
+                event: The event object containing details about the file creation event.
+        """
         if not event.is_directory:
             file_path = event.src_path
             print(f"File {file_path} has been created.")
@@ -41,7 +53,12 @@ class FileWatcher:
             return None
 
     def process_file_via_api(self, file_path):
+        """
+            Process the file via API calls. This includes storing the file in NoSQL and SQL databases.
 
+            Args:
+                file_path (str): The path to the file to be processed.
+        """
         # Placeholder: Adjust payload and headers as needed for your specific API
         with open(file_path, 'rb') as file:
             if check_mt940_file(file_path):
@@ -71,6 +88,9 @@ class FileWatcher:
             print("Failed to update balance.")
 
     def start(self):
+        """
+           Start the file watcher to monitor the specified directory for file creation events.
+       """
         event_handler = FileSystemEventHandler()
         event_handler.on_created = self.on_created
 
@@ -86,7 +106,9 @@ class FileWatcher:
 
         observer.join()
 
+
 if __name__ == "__main__":
+    # Set the directory to watch
     watch_directory = "../../MT940Files"
 
     file_watcher = FileWatcher(watch_directory)
