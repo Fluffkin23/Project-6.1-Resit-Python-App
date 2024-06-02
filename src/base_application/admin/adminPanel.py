@@ -7,13 +7,11 @@ from datetime import datetime
 from tkinter import ttk, messagebox
 from tkinter import filedialog
 
-
 from bson import json_util
 from tkcalendar import DateEntry
 import psycopg2
 from pywin.framework.editor import frame
 from self import self
-
 
 from src.base_application.api import parser
 from src.base_application.api.parser import FileWatcher
@@ -25,6 +23,8 @@ import requests
 from src.base_application import api_server_ip
 import xml.etree.ElementTree as ET
 
+
+# This initializes the main Tkinter window for the admin panel with a fixed size of 1200x900 pixels and a title.
 def adminPanel():
     selected_row = None
     window = tk.Tk()
@@ -40,25 +40,26 @@ def adminPanel():
     frame2.pack(side="right")
 
     # Get balance from db
+    # This section makes an API call to fetch data and set the balance variable.
     balance = "No data"
     response = requests.get(api_server_ip + "/api/getFile")
     if len(response.json()) != 0:
         balance = response.json()[0][4]
 
-
     # --------------------------------------------------- Functions -------------------------------------------------- #
+    # Function to manage members
     def manage_members_button():
-        window.destroy()
-        manage_members()
+        window.destroy()  # Close the current window
+        manage_members()  # Open manage members window
 
     def upload_button_click():
-        main()
+        main()  # Call main function for file upload
 
     def logout_button():
         # create_window()
         window.destroy()
         from src.base_application.app_pages.userPanel import create_window
-        create_window()
+        create_window()  # Open user panel window
 
     # Define a function to be called when a row of the table is clicked
     def on_click_table_row(event):
@@ -67,34 +68,39 @@ def adminPanel():
         item = table.selection()[0]
         # Get the values of the selected item
         values = table.item(item, "values")
-        selected_row = values[0]
+        selected_row = values[0]  # Store the selected row ID
 
+    # Function to handle edit button click
     def edit_button_click():
         global selected_row
         if selected_row is None:
             return
         window.destroy()
         from src.base_application.app_pages.editTransaction import edit_transaction_page_admin
-        edit_transaction_page_admin(selected_row)
+        edit_transaction_page_admin(selected_row)  # Open edit transaction page
 
+    # Function to retrieve data from the database
     def retrieveDB():
         response = requests.get(api_server_ip + "/api/getTransactionsSQL")
         if len(response.json()) == 0:
             return
         # Convert JSON object into an array of tuples
         rows_out = []
+        # It processes the response by extracting specific fields from each entry and storing them as tuples in a list.
         for entry in response.json():
             temp_tuple = (entry[0], entry[6], entry[2], entry[3], entry[1], entry[4])
             rows_out.append(tuple(temp_tuple))
         return rows_out
 
+    # Function to handle details button click
     def details_button_click():
         global selected_row
         if selected_row is None:
             return
         from src.base_application.app_pages.transactionDetails import transaction_details
-        transaction_details(selected_row)
+        transaction_details(selected_row)  # Open transaction details page
 
+    #  Function to retrieve data from the database based on a keyword search
     def retrieveDB_keyword_search(keyword):
         response = requests.get(api_server_ip + "/api/searchKeyword/" + str(keyword))
         if len(response.json()) == 0:
@@ -106,49 +112,72 @@ def adminPanel():
             rows_out.append(tuple(temp_tuple))
         return rows_out
 
+    # Function to handle downloading transactions as a JSON file
     def get_json_button_click():
         root = tk.Tk()
         root.withdraw()
-        root.wm_attributes("-topmost", 1)
+        root.wm_attributes("-topmost", 1)  # Make sure the file dialog is on top
 
+        # Get the selected start and end dates
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
 
+        # Construct the URL for the API request, including query parameters for the start and end dates
         url = f"{api_server_ip}/api/getTransactions?start_date={start_date}&end_date={end_date}"
 
         try:
+            # Make a GET request to the constructed URL to fetch transaction data
             response = requests.get(url)
+            # Raise an exception if the request returned an unsuccessful status code
             response.raise_for_status()
 
+            # Parse the JSON response to get the documents
             documents = response.json()
 
+            # Open a file save dialog to get the desired file path from the user
             file_path = filedialog.asksaveasfilename(defaultextension='.json')
+            # If a file path is provided, open the file in write mode
             if file_path:
                 with open(file_path, 'w') as f:
+                    # Write the JSON data to the file with indentation for readability
                     json.dump(documents, f, indent=4)
+                # Show a success message to the user
                 messagebox.showinfo("Success", "Filtered transactions saved to JSON file successfully.")
         except requests.exceptions.RequestException as e:
             messagebox.showerror("Error", f"Failed to fetch transactions: {e}")
         finally:
+            # Ensure the hidden root Tkinter window is destroyed after the operation
             root.destroy()
 
     def get_xml_button_click():
+        # Get the selected start and end dates from the date pickers
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
+
+        # Construct the URL for the API request, including query parameters for the start and end dates
         url = f"{api_server_ip}/api/getTransactions?start_date={start_date}&end_date={end_date}"
         try:
+            # Make a GET request to the constructed URL to fetch transaction data
             response = requests.get(url)
+            # Check if the request was successful
             if response.status_code == 200:
+                # Parse the JSON response to get the documents
                 documents = response.json()
 
                 # Root element for XML
                 root = ET.Element("MT940")
 
+                # Iterate through each document in the response
                 for document in documents:
+                    # Create a Document element for each document
                     doc_element = ET.SubElement(root, "Document")
+                    # Iterate through each transaction in the document
                     for transaction in document['transactions']:
+                        # Create a Transaction element for each transaction
                         trans_element = ET.SubElement(doc_element, "Transaction")
+                        # Iterate through each key-value pair in the transaction
                         for key, value in transaction.items():
+                            # Create an element for each key and set its text to the corresponding value
                             child = ET.SubElement(trans_element, key)
                             child.text = str(value)
 
@@ -166,6 +195,7 @@ def adminPanel():
                     messagebox.showinfo("Success", "Transactions saved to XML file successfully.")
 
         except requests.exceptions.RequestException as e:
+            # Show an error message if there was an issue with the request
             messagebox.showerror("Error", f"Failed to fetch transactions: {e}")
 
     def insert_category():
@@ -214,7 +244,6 @@ def adminPanel():
                        fg="black", justify="left")
     welcome.place(x=15, y=175, width=190, height=30)
 
-
     # Category Name Entry Label
     # label_category_name = tk.Label(frame1, text="Category Name", font=("Inter", 14, "normal"), bg="#D9D9D9", fg="black",
     #                                justify="left")
@@ -229,7 +258,8 @@ def adminPanel():
                                        fg="black", justify="left", command=lambda: insert_category())
     button_insert_category.place(x=300, y=330, width=180, height=30)  # Adjust y-coordinate as needed
 
-    button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left", command=lambda: logout_button())
+    button = tk.Button(frame1, text="Logout", font=("Inter", 12, "normal"), bg="#D9D9D9", fg="black", justify="left",
+                       command=lambda: logout_button())
     button.place(x=450, y=175, height=30)
 
     # manageMembers = tk.Button(frame1, text="Manage Memberships", font=("Inter", 12, "normal"),
@@ -263,15 +293,15 @@ def adminPanel():
                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_xml_button_click())
     downloadXMLFile.place(x=300, y=550, width=250, height=30)
 
-
-
-    balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000",
+                             justify="left")
     balance_label.place(x=35, y=600, width=160, height=24)
 
-    balance_number = tk.Label(frame1, text = balance ,font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    balance_number = tk.Label(frame1, text=balance, font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
     balance_number.place(x=210, y=600, width=160, height=24)
 
-    search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
+    search_balance_label = tk.Label(frame1, text="Sum of found transactions:", font=("Inter", 15), bg="#D9D9D9",
+                                    fg="#000000", justify="left")
     search_balance_label.place(x=35, y=700, width=240, height=24)
 
     search_summary_num = tk.Label(frame1, text="", font=("Inter", 15), bg="#D9D9D9", fg="#000000", justify="left")
@@ -333,7 +363,7 @@ def adminPanel():
     # Pack the table into the frame and center it horizontally
     table.pack(fill="both", expand=False)  # Fill the frame with the table
     table.place(x=15, y=100)  # Place the table 15 pixels from the left and 100 pixels from the top
-    table.bind("<ButtonRelease-1>", on_click_table_row, "+") # Bind row selection
+    table.bind("<ButtonRelease-1>", on_click_table_row, "+")  # Bind row selection
     frame2.pack_propagate(False)  # Prevent the frame from resizing to fit the table
 
     edit_button = ttk.Button(frame2, text="Edit", command=lambda: edit_button_click())
@@ -350,12 +380,13 @@ def adminPanel():
     downloadXMLFile['state'] = 'disabled'
 
     search = tk.Button(frame1, text="Search Keyword", font=("Inter", 12, "normal"),
-                       bg="#D9D9D9", fg="black", justify="left", command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
+                       bg="#D9D9D9", fg="black", justify="left",
+                       command=lambda: keyword_search_button(searchBar.get(), table, search_summary_num))
     search.place(x=300, y=400, width=180, height=30)
 
     addCashButton = tk.Button(frame1, text="Add Cash", font=("Inter", 12, "normal"),
-                                         bg="#D9D9D9", fg="black", justify="left",
-                                         command=open_add_cash_window)
+                              bg="#D9D9D9", fg="black", justify="left",
+                              command=open_add_cash_window)
     addCashButton.place(x=300, y=250, width=180, height=30)
 
     update_button = ttk.Button(frame2, text="Update", command=lambda: update_button_click(table, search_summary_num))
@@ -425,8 +456,6 @@ def adminPanel():
         except Exception as e:
             # Handle any exceptions
             messagebox.showerror("Error", "An error occurred: " + str(e))
-
-
 
     # Bind the on_closing function to the window close event
     window.protocol("WM_DELETE_WINDOW", on_closing)

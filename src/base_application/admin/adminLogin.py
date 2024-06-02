@@ -15,20 +15,22 @@ def login_admin_page():
     window.resizable(False, False)
 
     def login_button_click(password):
-        # Get password from DB
+        # Get password from the database via API call
         json_resp = requests.get(api_server_ip + "/api/getAssociation")
         if len(json_resp.json()) == 0:
-            # Make pop-up UNKNOWN ERROR
+            # Show error if there is an unknown error
             messagebox.showerror("Error", "Unknown error")
             return
 
-        pass_from_db = json_resp.json()[0][2]
+        # Get the password from the database response
+        pass_from_db = json_resp.json()[0][2]  # hashed password is at the index 2
         # Check credentials
         if password == "":
             messagebox.showerror("Error", "Please enter a password")
             return
         # Check if password matches the one from the database
         if hash_password(password) == pass_from_db:
+            # If password matches, close the current window and open the admin panel
             window.destroy()
             adminPanel()
         else:
@@ -36,13 +38,11 @@ def login_admin_page():
             pass_entry.delete(first=0, last=255)
             messagebox.showerror("Error", "Incorrect password")
 
-
-
     def back_button_click():
+        # Import and create the user panel window when back button is clicked
         from src.base_application.app_pages.userPanel import create_window
         window.destroy()
         create_window()
-
 
     # create two frames side by side
     frame1 = tk.Frame(window, width=600, height=900, bg="#D9D9D9")
@@ -79,4 +79,3 @@ def login_admin_page():
 
     # run the main loop
     window.mainloop()
-
