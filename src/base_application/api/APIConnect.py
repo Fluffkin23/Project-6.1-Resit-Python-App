@@ -617,7 +617,7 @@ def handle_categories():
                 )
             return jsonify(response_data), 500
 
-
+# Update the /api/downloads endpoint to filter transactions based on date and return the correct format
 @app.route("/api/downloads", methods=["GET"])
 def download_data():
     start_date = request.args.get('start_date')
@@ -666,21 +666,38 @@ def transaction_by_id(trans_id):
     if request.method == "GET":
         try:
             cursor = postgre_connection.cursor()
-
             cursor.execute('SELECT * FROM select_transaction_on_id(%s)', (int(trans_id),))
-
             data = cursor.fetchall()
+            response_data = data
 
-            return jsonify(data)
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=200,
+                    mimetype='application/xml'
+                )
+
+            return jsonify(response_data)
         except psycopg2.InterfaceError as error:
             error_message = str(error)
-            return jsonify({'error': error_message})
+            response_data = {'error': error_message}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 500
+
     elif request.method in ["POST", "PUT"]:
         try:
             # Get data from the request
-            description = request.json.get('desc')
-            categoryID = request.json.get('category')
-            memberID = request.json.get('member')
+            data = request.get_json()
+            description = data.get('desc')
+            categoryID = data.get('category')
+            memberID = data.get('member')
 
             cursor = postgre_connection.cursor()
 
@@ -691,12 +708,28 @@ def transaction_by_id(trans_id):
             cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
                 trans_id, description, categoryID, memberID))
 
-            return jsonify({'message': 'Transaction Updated'})
+            response_data = {'message': 'Transaction Updated'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=200,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data)
         except psycopg2.InterfaceError as error:
             error_message = str(error)
-            return jsonify({'error': error_message})
-# Send a POST request with the file path to this function
+            response_data = {'error': error_message}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 500
 
+# we need
 @app.route("/api/insertFile", methods=["POST"])
 def insert_file():
     try:
@@ -705,8 +738,15 @@ def insert_file():
 
         # Validate JSON
         if not validate_json(json_transactions):
-            print("Validation failed")
-            return jsonify({'Error': 'Error Occured'})
+            response_data = {'Error': 'Validation failed'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=400,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 400
 
         # Extract values from a JSON into variables for the File table
         reference_number = str(json_transactions["transaction_reference"])
@@ -723,17 +763,35 @@ def insert_file():
             reference_number, statement_number, sequence_detail, available_balance, forward_available_balance,
             account_identification))
 
-        # commit the transaction
+        # Commit the transaction
         postgre_connection.commit()
 
-        # close the cursor
+        # Close the cursor
         cursor.close()
 
-        return jsonify({'message': 'File inserted successfully'})
+        response_data = {'message': 'File inserted successfully'}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=201,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 201
+
     except (Exception, psycopg2.DatabaseError) as error:
-        return jsonify({'message': error})
+        error_message = str(error)
+        response_data = {'message': error_message}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 500
 
-
+# this we need
 @app.route("/api/insertTransaction", methods=["POST"])
 def insert_transaction():
     try:
@@ -742,8 +800,15 @@ def insert_transaction():
 
         # Validate JSON
         if not validate_json(json_trans):
-            print("Validation failed")
-            return jsonify({'Error': 'Error Occured'})
+            response_data = {'Error': 'Validation failed'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=400,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 400
 
         bank_reference = str(json_trans["transaction_reference"])
 
@@ -753,8 +818,7 @@ def insert_transaction():
             amount = trans_set["amount"]["amount"]
             currency = trans_set["amount"]["currency"]
             transaction_date = trans_set["date"]
-            transaction_details = str(trans_set["transaction_details"])
-            transaction_details = transaction_details.replace("/", "-")
+            transaction_details = str(trans_set["transaction_details"]).replace("/", "-")
             description = None
             typetransaction = trans_set["status"]
 
@@ -767,7 +831,24 @@ def insert_transaction():
         # close the cursor
         cursor.close()
 
-        return jsonify({'message': 'File inserted successfully'})
+        response_data = {'message': 'File inserted successfully'}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=201,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 201
+
     except (Exception, psycopg2.DatabaseError) as error:
         error_message = str(error)
-        return jsonify({'error': error_message})
+        response_data = {'error': error_message}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 500

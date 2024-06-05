@@ -112,48 +112,24 @@ def adminPanel():
             return rows_out
         return []  # Ensure an empty list is returned if no data is found
 
-    def get_json_button_click():
-        root = tk.Tk()
-        root.withdraw()
-        root.wm_attributes("-topmost", 1)
-
-        start_date = start_date_picker.get_date()
-        end_date = end_date_picker.get_date()
-
-        url = f"{api_server_ip}/api/transactions/filter?start_date={start_date}&end_date={end_date}"
-
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-
-            documents = response.json()
-
-            file_path = filedialog.asksaveasfilename(defaultextension='.json')
-            if file_path:
-                with open(file_path, 'w') as f:
-                    json.dump(documents, f, indent=4)
-                messagebox.showinfo("Success", "Filtered transactions saved to JSON file successfully.")
-        except requests.exceptions.RequestException as e:
-            messagebox.showerror("Error", f"Failed to fetch transactions: {e}")
-        finally:
-            root.destroy()
-
-    def get_xml_button_click():
+    # Update the client-side function to just call this endpoint and handle the response
+    def get_data_button_click(format='json'):
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
         url = f"{api_server_ip}/api/downloads?start_date={start_date}&end_date={end_date}"
         try:
-            headers = {'Accept': 'application/xml'}
+            headers = {'Accept': f'application/{format}'}
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 # Use the root tkinter window for the file dialog
-                file_path = filedialog.asksaveasfilename(defaultextension='.xml')
+                file_extension = 'xml' if format == 'xml' else 'json'
+                file_path = filedialog.asksaveasfilename(defaultextension=f'.{file_extension}')
 
-                # Write the XML data to the selected file path
+                # Write the data to the selected file path
                 if file_path:
                     with open(file_path, 'w') as file:
                         file.write(response.text)
-                    messagebox.showinfo("Success", "Transactions saved to XML file successfully.")
+                    messagebox.showinfo("Success", f"Transactions saved to {file_extension.upper()} file successfully.")
             else:
                 messagebox.showerror("Error", f"Failed to fetch transactions: {response.status_code}")
         except requests.exceptions.RequestException as e:
@@ -222,11 +198,11 @@ def adminPanel():
     end_date_picker.place(x=180, y=480, width=150, height=25)
 
     downloadJSONFile = tk.Button(frame1, text="Download Transactions in JSON", font=("Inter", 12, "normal"),
-                                 bg="#D9D9D9", fg="black", justify="left", command=get_json_button_click)
+                                 bg="#D9D9D9", fg="black", justify="left", command=lambda: get_data_button_click(format='json'))
     downloadJSONFile.place(x=35, y=550, width=250, height=30)
 
     downloadXMLFile = tk.Button(frame1, text="Download Transactions in XML", font=("Inter", 12, "normal"),
-                                bg="#D9D9D9", fg="black", justify="left", command=get_xml_button_click)
+                                bg="#D9D9D9", fg="black", justify="left", command=lambda: get_data_button_click(format='xml'))
     downloadXMLFile.place(x=300, y=550, width=250, height=30)
 
     balance_label = tk.Label(frame1, text="Available Balance:", font=("Inter", 15), bg="#D9D9D9", fg="#000000",
