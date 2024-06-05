@@ -141,36 +141,21 @@ def adminPanel():
     def get_xml_button_click():
         start_date = start_date_picker.get_date()
         end_date = end_date_picker.get_date()
-        url = f"{api_server_ip}/api/transactions/filter?start_date={start_date}&end_date={end_date}"
+        url = f"{api_server_ip}/api/downloads?start_date={start_date}&end_date={end_date}"
         try:
-            response = requests.get(url)
+            headers = {'Accept': 'application/xml'}
+            response = requests.get(url, headers=headers)
             if response.status_code == 200:
-                documents = response.json()
-
-                # Root element for XML
-                root = ET.Element("MT940")
-
-                for document in documents:
-                    doc_element = ET.SubElement(root, "Document")
-                    for transaction in document['transactions']:
-                        trans_element = ET.SubElement(doc_element, "Transaction")
-                        for key, value in transaction.items():
-                            child = ET.SubElement(trans_element, key)
-                            child.text = str(value)
-
-                # Convert ElementTree to string and pretty print XML
-                xml_str = ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8')
-                xml_pretty = xml.dom.minidom.parseString(xml_str).toprettyxml()
-
                 # Use the root tkinter window for the file dialog
                 file_path = filedialog.asksaveasfilename(defaultextension='.xml')
 
                 # Write the XML data to the selected file path
                 if file_path:
                     with open(file_path, 'w') as file:
-                        file.write(xml_pretty)
+                        file.write(response.text)
                     messagebox.showinfo("Success", "Transactions saved to XML file successfully.")
-
+            else:
+                messagebox.showerror("Error", f"Failed to fetch transactions: {response.status_code}")
         except requests.exceptions.RequestException as e:
             messagebox.showerror("Error", f"Failed to fetch transactions: {e}")
 
