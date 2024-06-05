@@ -319,57 +319,22 @@ def get_file():
         # Default to JSON response
         return jsonify(response_data), 500
 
-
 @app.route("/api/associations", methods=["GET", "POST"])
 def handle_associations():
     if request.method == "GET":
-        try:
-            # Fetch and return all associations
-            cursor = postgre_connection.cursor()
-            cursor.execute("SELECT * FROM select_all_association()")
-            associations = cursor.fetchall()
-            response_data = associations
-
-            if request.headers.get('Accept') == 'application/xml':
-                xml_response = json2xml.Json2xml(response_data).to_xml()
-                return Response(
-                    response=xml_response,
-                    status=200,
-                    mimetype='application/xml'
-                )
-
-            return jsonify(response_data)
-
-        except Exception as error:
-            error_message = str(error)
-            response_data = {'error': 'Internal Server Error'}
-
-            if request.headers.get('Accept') == 'application/xml':
-                xml_response = json2xml.Json2xml(response_data).to_xml()
-                return Response(
-                    response=xml_response,
-                    status=500,
-                    mimetype='application/xml'
-                )
-
-            return jsonify(response_data), 500
-
+        # Fetch and return all associations
+        cursor = postgre_connection.cursor()
+        cursor.execute("SELECT * FROM select_all_association()")
+        associations = cursor.fetchall()
+        return jsonify(associations)
     elif request.method == "POST":
         try:
-            # Get the JSON data from the POST request
-            json_data = request.get_json()
-
-            # Validate JSON data
-            if not validate_association_json(json_data):
-                response_data = {'error': 'Invalid JSON format'}
-                if request.headers.get('Accept') == 'application/xml':
-                    xml_response = json2xml.Json2xml(response_data).to_xml()
-                    return Response(
-                        response=xml_response,
-                        status=400,
-                        mimetype='application/xml'
-                    )
-                return jsonify(response_data), 400
+            # Get the JSON file from the POST request
+            json_data = json.loads(request.get_json())
+            # Validate with schema
+            # if not validate_association_json(json_data):
+            #     print("Schema failed")
+            # jsonify({'Error': 'Error Occured'})
 
             accountID = str(json_data['accountID'])
             name = str(json_data['name'])
@@ -377,40 +342,20 @@ def handle_associations():
 
             cursor = postgre_connection.cursor()
 
-            # Call a stored procedure
+            # call a stored procedure
             cursor.execute('CALL insert_into_association(%s,%s,%s)', (accountID, name, hashed_password))
 
-            # Commit the transaction
+            # commit the transaction
             postgre_connection.commit()
 
-            # Close the cursor
+            # close the cursor
             cursor.close()
 
-            response_data = {'message': 'Association inserted successfully'}
-
-            if request.headers.get('Accept') == 'application/xml':
-                xml_response = json2xml.Json2xml(response_data).to_xml()
-                return Response(
-                    response=xml_response,
-                    status=200,
-                    mimetype='application/xml'
-                )
-
-            return jsonify(response_data), 200
-
+            return jsonify({'message': 'Association inserted successfully'}), 200
         except (Exception, psycopg2.DatabaseError) as error:
             error_message = str(error)
-            response_data = {'error': error_message}
+            return jsonify({'error': error_message})
 
-            if request.headers.get('Accept') == 'application/xml':
-                xml_response = json2xml.Json2xml(response_data).to_xml()
-                return Response(
-                    response=xml_response,
-                    status=500,
-                    mimetype='application/xml'
-                )
-
-            return jsonify(response_data), 500
 
 @app.route("/api/members", methods=["GET", "POST"])
 def get_members():
