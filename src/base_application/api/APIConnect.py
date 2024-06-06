@@ -73,6 +73,10 @@ def test_api():
 
 @app.route("/api/transactions/count", methods=["GET"])
 def get_transactions_count():
+    """
+       This endpoint returns the count of transactions in the database.
+       If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+   """
     count = transactions_collection.count_documents({})
     response_data = {"transactionsCount": count}
     if request.headers.get('Accept') == 'application/xml':
@@ -83,6 +87,10 @@ def get_transactions_count():
 
 @app.route("/api/transactions", methods=["GET"])
 def get_all_transactions():
+    """
+        This endpoint retrieves all transactions from the database.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     transactions_cursor = transactions_collection.find()
     transactions_list = list(transactions_cursor)
     if request.headers.get('Accept') == 'application/xml':
@@ -93,6 +101,10 @@ def get_all_transactions():
 
 @app.route("/api/transactions/sql", methods=["GET"])
 def get_transactions_sql():
+    """
+        This endpoint retrieves all transactions from a PostgreSQL database using a stored procedure.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     try:
         cursor = postgre_connection.cursor()
         cursor.execute('SELECT * FROM select_all_transaction()')
@@ -113,6 +125,10 @@ def get_transactions_sql():
 
 @app.route("/api/transactions", methods=["POST"])
 def create_transaction():
+    """
+        This endpoint creates a new transaction in the database.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     json_data = request.get_json()
     transactions_collection.insert_one(json_data)
 
@@ -127,6 +143,11 @@ def create_transaction():
 
 @app.route("/api/transactions", methods=["PUT"])
 def update_transaction():
+    """
+        This endpoint updates an existing transaction in the PostgreSQL database using a stored procedure.
+        Data for the transaction is obtained from the POST request form.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     try:
         cursor = postgre_connection.cursor()
         # Get data from a POST request
@@ -169,6 +190,15 @@ def update_transaction():
 
 @app.route("/api/transactions/filter", methods=["GET"])
 def filter_transactions():
+    """
+        This endpoint filters transactions based on a date range provided as query parameters ('start_date' and 'end_date').
+        - If both 'start_date' and 'end_date' are provided, it constructs a query to find transactions within that date range.
+        - The transactions are retrieved from the database and converted to a list.
+        - If the request's 'Accept' header is 'application/xml', the response is converted to XML format and returned with a 200 status.
+        - Otherwise, the response is returned in JSON format with a 200 status.
+        - If an error occurs during the retrieval or serialization of transactions, a 500 status with an error message is returned.
+          The error message format is determined by the 'Accept' header of the request.
+    """
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -215,6 +245,15 @@ def filter_transactions():
 
 @app.route("/api/transactions/search/<keyword>", methods=["GET"])
 def search_transactions(keyword):
+    """
+        This endpoint searches for transactions in the PostgreSQL database using a keyword.
+        - The keyword is passed as a URL parameter and used to call the stored procedure 'search_table2'.
+        - The results of the stored procedure are fetched and stored in 'response_data'.
+        - If the request's 'Accept' header is 'application/xml', the response is converted to XML format and returned with a 200 status.
+        - Otherwise, the response is returned in JSON format with a 200 status.
+        - If an exception occurs during the database query, an error message is generated and returned with a 500 status.
+          The error message format is determined by the 'Accept' header of the request.
+    """
     try:
         cursor = postgre_connection.cursor()
 
@@ -252,6 +291,14 @@ def search_transactions(keyword):
 
 @app.route("/api/files/upload", methods=["POST"])
 def file_upload():
+    """
+        This endpoint handles the upload of a JSON file:
+        - The JSON data is retrieved from the POST request.
+        - The JSON is validated using the validate_json() function. If the JSON format is invalid, it returns a 400 status with an error message.
+        - If the JSON is valid, it is inserted into the transactions_collection in the database.
+        - A success message is returned with a 201 status if the insertion is successful.
+        - The response format (XML or JSON) is determined by the 'Accept' header in the request.
+    """
     file_data = request.json
 
     # Validate JSON
@@ -282,6 +329,16 @@ def file_upload():
 
 @app.route("/api/files", methods=["GET"])
 def get_file():
+    """
+        This endpoint retrieves file metadata or contents from the database:
+        - It queries the database using a stored procedure `select_all_file()` to fetch all file records.
+        - The response data is prepared based on the results of the query.
+        - The response format (XML or JSON) is determined by the 'Accept' header in the request.
+          - If 'Accept' header is 'application/xml', the response is converted to XML format and returned with a 200 status.
+          - Otherwise, the response is returned in JSON format with a 200 status.
+        - If an error occurs during the process, a 500 status with an error message is returned.
+          - The error message format is also determined by the 'Accept' header in the request.
+    """
     try:
         # Fetch file metadata or contents from the database
         files_cursor = postgre_connection.cursor()
@@ -321,6 +378,20 @@ def get_file():
 
 @app.route("/api/associations", methods=["GET", "POST"])
 def handle_associations():
+    """
+        This endpoint handles GET and POST requests for associations:
+        - For GET requests:
+          - Fetches all associations from the database using a stored procedure `select_all_association()`.
+          - Returns the results in JSON format.
+        - For POST requests:
+          - Parses JSON data from the request body.
+          - Validates the JSON data (validation code is commented out).
+          - Extracts `accountID`, `name`, and `password` from the JSON data.
+          - Inserts a new association into the database using a stored procedure `insert_into_association()`.
+          - Commits the transaction and closes the cursor.
+          - Returns a success message in JSON format with a 200 status.
+        - If an error occurs during the POST request, returns an error message in JSON format.
+    """
     if request.method == "GET":
         # Fetch and return all associations
         cursor = postgre_connection.cursor()
@@ -359,6 +430,21 @@ def handle_associations():
 
 @app.route("/api/members", methods=["GET", "POST"])
 def get_members():
+    """
+       This endpoint handles GET and POST requests for members:
+       - For GET requests:
+         - Fetches all members from the database using a stored procedure `select_all_member()`.
+         - Returns the results in JSON format by default, or XML format if specified in the 'Accept' header.
+         - In case of a database interface error, returns a 500 status with an error message in the format specified by the 'Accept' header.
+       - For POST requests:
+         - Parses JSON data from the request body.
+         - Validates the JSON data using the `validate_member_json()` function.
+         - If validation fails, returns a 400 status with an error message in the format specified by the 'Accept' header.
+         - Extracts `name` and `email` from the JSON data and inserts a new member into the database using a stored procedure `insert_into_member()`.
+         - Commits the transaction and closes the cursor.
+         - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+         - In case of a database error or JSON decode error, returns an appropriate status with an error message in the format specified by the 'Accept' header.
+   """
     if request.method == "GET":
         try:
             cursor = postgre_connection.cursor()
@@ -477,6 +563,13 @@ def get_members():
 
 @app.route("/api/members/<member_id>", methods=["DELETE"])
 def delete_member(member_id):
+    """
+       This endpoint handles DELETE requests to remove a member by their ID:
+       - Calls a stored procedure `delete_member(member_id)` to delete the member from the database.
+       - Commits the transaction and closes the cursor.
+       - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 200 status.
+       - In case of a database error, returns a 500 status with an error message in the format specified by the 'Accept' header.
+   """
     try:
         cursor = postgre_connection.cursor()
 
@@ -522,6 +615,21 @@ def delete_member(member_id):
 
 @app.route("/api/categories", methods=["GET", "POST"])
 def handle_categories():
+    """
+        This endpoint handles GET and POST requests for categories:
+        - For GET requests:
+          - Fetches all categories from the 'category' table in the database.
+          - Returns the results in JSON format by default, or XML format if specified in the 'Accept' header, with a 200 status.
+          - In case of a database error, returns a 500 status with an error message in the format specified by the 'Accept' header.
+        - For POST requests:
+          - Extracts the 'name' field from the JSON data in the request body.
+          - Validates that the 'name' field is present. If not, returns a 400 status with an error message in the format specified by the 'Accept' header.
+          - Inserts a new category into the 'category' table in the database.
+          - Commits the transaction and closes the cursor.
+          - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+          - In case of a database error, rolls back the transaction and returns a 500 status with an error message in the format specified by the 'Accept' header.
+          - In case of other exceptions, returns a 500 status with an error message in the format specified by the 'Accept' header.
+    """
     if request.method == "GET":
         try:
             cursor = postgre_connection.cursor()
@@ -620,6 +728,13 @@ def handle_categories():
 # Update the /api/downloads endpoint to filter transactions based on date and return the correct format
 @app.route("/api/downloads", methods=["GET"])
 def download_data():
+    """
+       This endpoint allows downloading transactions filtered by a date range:
+       - The date range is specified using 'start_date' and 'end_date' query parameters.
+       - Filters transactions based on the specified date range.
+       - Returns the transactions in JSON format by default, or XML format if specified in the 'Accept' header, as an attachment.
+       - The filename of the attachment is 'transactions.json' for JSON responses and 'transactions.xml' for XML responses.
+   """
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -648,6 +763,12 @@ def download_data():
 
 @app.route("/api/transactions/join/<int:trans_id>", methods=["GET"])
 def transaction_by_id_join(trans_id):
+    """
+        This endpoint retrieves transaction details along with joined information from the database based on the transaction ID:
+        - It queries the `full_join_view` view to get the transaction details where the `transactionid` matches the provided `trans_id`.
+        - Returns the result in JSON format.
+        - In case of a database interface error, returns a 500 status with an error message in JSON format.
+    """
     try:
         cursor = postgre_connection.cursor()
 
@@ -663,6 +784,20 @@ def transaction_by_id_join(trans_id):
 
 @app.route("/api/transactions/<int:trans_id>", methods=["GET", "POST", "PUT"])
 def transaction_by_id(trans_id):
+    """
+        This endpoint handles GET, POST, and PUT requests for a specific transaction by its ID:
+        - For GET requests:
+          - Fetches the transaction details from the database using the `select_transaction_on_id` stored procedure.
+          - Returns the result in JSON format by default, or XML format if specified in the 'Accept' header.
+          - In case of a database interface error, returns a 500 status with an error message in the specified format.
+        - For POST and PUT requests:
+          - Parses JSON data from the request body to update a transaction.
+          - Extracts `description`, `categoryID`, and `memberID` from the JSON data.
+          - Converts `categoryID` and `memberID` to integers if they are not "None".
+          - Calls the `update_transaction` stored procedure to update the transaction in the database.
+          - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 200 status.
+          - In case of a database interface error, returns a 500 status with an error message in the specified format.
+    """
     if request.method == "GET":
         try:
             cursor = postgre_connection.cursor()
@@ -732,6 +867,17 @@ def transaction_by_id(trans_id):
 # we need
 @app.route("/api/insertFile", methods=["POST"])
 def insert_file():
+    """
+       This endpoint handles the insertion of a JSON file containing transaction details:
+       - Retrieves the JSON data from the POST request.
+       - Validates the JSON data using the `validate_json` function.
+         - If validation fails, returns a 400 status with an error message in JSON or XML format based on the 'Accept' header.
+       - Extracts necessary fields from the JSON data to insert into the `File` table.
+       - Calls the `insert_into_file` stored procedure to insert the data into the database.
+       - Commits the transaction and closes the cursor.
+       - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+       - In case of a database error, returns a 500 status with an error message in JSON or XML format based on the 'Accept' header.
+   """
     try:
         # Get the JSON file from the POST request
         json_transactions = request.get_json()
@@ -794,6 +940,17 @@ def insert_file():
 # this we need
 @app.route("/api/insertTransaction", methods=["POST"])
 def insert_transaction():
+    """
+       This endpoint handles the insertion of transactions from a JSON file:
+       - Retrieves the JSON data from the POST request.
+       - Validates the JSON data using the `validate_json` function.
+         - If validation fails, returns a 400 status with an error message in JSON or XML format based on the 'Accept' header.
+       - Extracts necessary fields from the JSON data to insert into the `Transaction` table.
+       - Iterates over each transaction in the JSON data and calls the `insert_into_transaction` stored procedure to insert the data into the database.
+       - Commits each transaction and closes the cursor after all insertions.
+       - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+       - In case of a database error, returns a 500 status with an error message in JSON or XML format based on the 'Accept' header.
+   """
     try:
         # Get the JSON file from the POST request
         json_trans = request.get_json()
