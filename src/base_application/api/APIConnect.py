@@ -83,9 +83,17 @@ def get_transactions_count():
 
 @app.route("/api/transactions", methods=["GET"])
 def get_all_transactions():
+    """
+        This endpoint retrieves all transactions from the database.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     transactions_cursor = transactions_collection.find()
     transactions_list = list(transactions_cursor)
+    if request.headers.get('Accept') == 'application/xml':
+        xml_response = to_xml(transactions_list)
+        return Response(xml_response, mimetype='application/xml')
     return Response(response=json_util.dumps(transactions_list), status=200, mimetype='application/json')
+
 
 
 @app.route("/api/transactions/sql", methods=["GET"])
