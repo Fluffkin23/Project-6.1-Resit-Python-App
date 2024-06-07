@@ -239,6 +239,15 @@ def filter_transactions():
 
 @app.route("/api/transactions/search/<keyword>", methods=["GET"])
 def search_transactions(keyword):
+    """
+        This endpoint searches for transactions in the PostgreSQL database using a keyword.
+        - The keyword is passed as a URL parameter and used to call the stored procedure 'search_table2'.
+        - The results of the stored procedure are fetched and stored in 'response_data'.
+        - If the request's 'Accept' header is 'application/xml', the response is converted to XML format and returned with a 200 status.
+        - Otherwise, the response is returned in JSON format with a 200 status.
+        - If an exception occurs during the database query, an error message is generated and returned with a 500 status.
+          The error message format is determined by the 'Accept' header of the request.
+    """
     try:
         cursor = postgre_connection.cursor()
 
@@ -247,25 +256,30 @@ def search_transactions(keyword):
 
         # Fetch the results from the function call
         results = cursor.fetchall()
-        return jsonify(results)
+        response_data = results
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=200,
+                mimetype='application/xml'
+            )
+
+        return jsonify(response_data)
+
     except (Exception, psycopg2.DatabaseError) as error:
-        return jsonify({'message': error})
+        error_message = str(error)
+        response_data = {'message': error_message}
 
-
-# @app.route("/api/searchKeyword/<keyword>", methods=["GET"])
-# def search_keyword(keyword):
-#     transactions_cursor = transactions_collection.find({
-#         "$text": {
-#             "$search": keyword
-#         }
-#     })
-#     transactions = list(transactions_cursor)
-#     return Response(
-#         response=json_util.dumps(transactions),
-#         status=200,
-#         mimetype='application/json'
-#     )
-
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 500
 
 @app.route("/api/files/upload", methods=["POST"])
 def file_upload():
