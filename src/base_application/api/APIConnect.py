@@ -294,7 +294,7 @@ def file_upload():
     file_data = request.json
 
     # Validate JSON
-    if not validate_json(file_data):  # Assuming validate_json() checks the schema/format
+    if not validate_json(file_data):  
         response_data = {'error': 'Invalid JSON format'}
         if request.headers.get('Accept') == 'application/xml':
             xml_response = json2xml.Json2xml(response_data).to_xml()
@@ -321,13 +321,52 @@ def file_upload():
 
 @app.route("/api/files", methods=["GET"])
 def get_file():
-    # This would typically fetch file metadata or contents from a database
-    # For simplicity, assuming a function fetch_file_data() fetches file info
-    files_cursor = postgre_connection.cursor()
-    files_cursor.execute("SELECT * FROM select_all_file()")  # Assuming a table `files` exists
-    files = files_cursor.fetchall()
-    return jsonify(files)
+    """
+        This endpoint retrieves file metadata or contents from the database:
+        - It queries the database using a stored procedure `select_all_file()` to fetch all file records.
+        - The response data is prepared based on the results of the query.
+        - The response format (XML or JSON) is determined by the 'Accept' header in the request.
+          - If 'Accept' header is 'application/xml', the response is converted to XML format and returned with a 200 status.
+          - Otherwise, the response is returned in JSON format with a 200 status.
+        - If an error occurs during the process, a 500 status with an error message is returned.
+          - The error message format is also determined by the 'Accept' header in the request.
+    """
+    try:
+        # Fetch file metadata or contents from the database
+        files_cursor = postgre_connection.cursor()
+        files_cursor.execute("SELECT * FROM select_all_file()") 
+        files = files_cursor.fetchall()
 
+        # Prepare the response data
+        response_data = files
+
+        # Check the Accept header to determine the response format
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=200,
+                mimetype='application/xml'
+            )
+
+        # Default to JSON response
+        return jsonify(response_data)
+
+    except Exception as error:
+        error_message = str(error)
+        response_data = {'error': 'Internal Server Error'}
+
+        # Check the Accept header to determine the response format
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+
+        # Default to JSON response
+        return jsonify(response_data), 500
 
 @app.route("/api/associations", methods=["GET", "POST"])
 def handle_associations():
