@@ -283,14 +283,40 @@ def search_transactions(keyword):
 
 @app.route("/api/files/upload", methods=["POST"])
 def file_upload():
+    """
+        This endpoint handles the upload of a JSON file:
+        - The JSON data is retrieved from the POST request.
+        - The JSON is validated using the validate_json() function. If the JSON format is invalid, it returns a 400 status with an error message.
+        - If the JSON is valid, it is inserted into the transactions_collection in the database.
+        - A success message is returned with a 201 status if the insertion is successful.
+        - The response format (XML or JSON) is determined by the 'Accept' header in the request.
+    """
     file_data = request.json
-    # Assuming the presence of a validation function and MongoDB insert
+
     # Validate JSON
     if not validate_json(file_data):  # Assuming validate_json() checks the schema/format
-        return jsonify({'error': 'Invalid JSON format'}), 400
+        response_data = {'error': 'Invalid JSON format'}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=400,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 400
 
     transactions_collection.insert_one(file_data)
-    return jsonify({'message': 'File uploaded successfully'})
+    response_data = {'message': 'File uploaded successfully'}
+
+    if request.headers.get('Accept') == 'application/xml':
+        xml_response = json2xml.Json2xml(response_data).to_xml()
+        return Response(
+            response=xml_response,
+            status=201,
+            mimetype='application/xml'
+        )
+
+    return jsonify(response_data), 201
 
 
 @app.route("/api/files", methods=["GET"])
