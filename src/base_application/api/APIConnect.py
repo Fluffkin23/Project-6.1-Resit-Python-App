@@ -185,6 +185,15 @@ def update_transaction():
 
 @app.route("/api/transactions/filter", methods=["GET"])
 def filter_transactions():
+    """
+        This endpoint filters transactions based on a date range provided as query parameters ('start_date' and 'end_date').
+        - If both 'start_date' and 'end_date' are provided, it constructs a query to find transactions within that date range.
+        - The transactions are retrieved from the database and converted to a list.
+        - If the request's 'Accept' header is 'application/xml', the response is converted to XML format and returned with a 200 status.
+        - Otherwise, the response is returned in JSON format with a 200 status.
+        - If an error occurs during the retrieval or serialization of transactions, a 500 status with an error message is returned.
+          The error message format is determined by the 'Accept' header of the request.
+    """
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -196,6 +205,15 @@ def filter_transactions():
     try:
         transactions_cursor = transactions_collection.find(query)
         transactions_list = list(transactions_cursor)
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(transactions_list).to_xml()
+            return Response(
+                response=xml_response,
+                status=200,
+                mimetype='application/xml'
+            )
+
         return Response(
             response=json_util.dumps(transactions_list),
             status=200,
@@ -203,12 +221,21 @@ def filter_transactions():
         )
     except Exception as e:
         print("Error retrieving or serializing transactions:", e)
+        error_response = {"error": "Internal Server Error"}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(error_response).to_xml()
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+
         return Response(
-            response=json_util.dumps({"error": "Internal Server Error"}),
+            response=json_util.dumps(error_response),
             status=500,
             mimetype='application/json'
         )
-
 
 @app.route("/api/transactions/search/<keyword>", methods=["GET"])
 def search_transactions(keyword):
