@@ -420,6 +420,139 @@ def handle_associations():
             return jsonify({'error': error_message})
 
 
+
+@app.route("/api/members", methods=["GET", "POST"])
+def get_members():
+    """
+       This endpoint handles GET and POST requests for members:
+       - For GET requests:
+         - Fetches all members from the database using a stored procedure `select_all_member()`.
+         - Returns the results in JSON format by default, or XML format if specified in the 'Accept' header.
+         - In case of a database interface error, returns a 500 status with an error message in the format specified by the 'Accept' header.
+       - For POST requests:
+         - Parses JSON data from the request body.
+         - Validates the JSON data using the `validate_member_json()` function.
+         - If validation fails, returns a 400 status with an error message in the format specified by the 'Accept' header.
+         - Extracts `name` and `email` from the JSON data and inserts a new member into the database using a stored procedure `insert_into_member()`.
+         - Commits the transaction and closes the cursor.
+         - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+         - In case of a database error or JSON decode error, returns an appropriate status with an error message in the format specified by the 'Accept' header.
+   """
+    if request.method == "GET":
+        try:
+            cursor = postgre_connection.cursor()
+            # Call a stored procedure
+            cursor.execute('SELECT * FROM select_all_member()')
+
+            # Get all data from the stored procedure
+            data = cursor.fetchall()
+            response_data = data
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=200,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data)
+
+        except psycopg2.InterfaceError as error:
+            error_message = str(error)
+            response_data = {'error': error_message}
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data), 500
+
+    elif request.method == "POST":
+        try:
+            # Get the JSON data from the POST request
+            json_data = request.get_json()
+
+            # Validate with schema
+            if not validate_member_json(json_data):
+                response_data = {'Error': 'Error Occurred'}
+                if request.headers.get('Accept') == 'application/xml':
+                    xml_response = json2xml.Json2xml(response_data).to_xml()
+                    return Response(
+                        response=xml_response,
+                        status=400,
+                        mimetype='application/xml'
+                    )
+                return jsonify(response_data), 400
+
+            name = json_data['name']
+            email = json_data['email']
+
+            cursor = postgre_connection.cursor()
+
+            # Call a stored procedure
+            cursor.execute('CALL insert_into_member(%s,%s)', (name, email))
+
+            # Commit the transaction
+            postgre_connection.commit()
+
+            # Close the cursor
+            cursor.close()
+
+            response_data = {'message': 'Member saved successfully'}
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=201,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data), 201
+
+        except (Exception, psycopg2.DatabaseError) as error:
+            error_message = str(error)
+            response_data = {'error': error_message}
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data), 500
+
+        except JSONDecodeError as error:
+            # Handle JSONDecodeError gracefully
+            response_data = {'error': 'Invalid JSON format'}
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=400,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data), 400
+
 @app.route("/api/members/<member_id>", methods=["DELETE"])
 def delete_member(member_id):
     try:
