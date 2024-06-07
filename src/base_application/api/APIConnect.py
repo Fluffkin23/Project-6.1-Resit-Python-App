@@ -69,8 +69,16 @@ def test_api():
 
 @app.route("/api/transactions/count", methods=["GET"])
 def get_transactions_count():
+    """
+       This endpoint returns the count of transactions in the database.
+       If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+   """
     count = transactions_collection.count_documents({})
-    return jsonify({"transactionsCount": count})
+    response_data = {"transactionsCount": count}
+    if request.headers.get('Accept') == 'application/xml':
+        xml_response = to_xml(response_data)
+        return Response(xml_response, mimetype='application/xml')
+    return jsonify(response_data)
 
 
 @app.route("/api/transactions", methods=["GET"])
