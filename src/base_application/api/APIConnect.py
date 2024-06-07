@@ -98,12 +98,21 @@ def get_all_transactions():
 
 @app.route("/api/transactions/sql", methods=["GET"])
 def get_transactions_sql():
+    """
+        This endpoint retrieves all transactions from a PostgreSQL database using a stored procedure.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     try:
         cursor = postgre_connection.cursor()
         cursor.execute('SELECT * FROM select_all_transaction()')
         data = cursor.fetchall()
         cursor.close()  # Close cursor
         postgre_connection.commit()  # Commit to ensure the transaction is not left open
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(data)
+            return Response(xml_response, mimetype='application/xml')
+
         return jsonify(data)
     except psycopg2.InterfaceError as error:
         postgre_connection.rollback()  # Rollback in case of error
