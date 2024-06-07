@@ -15,6 +15,10 @@ from src.base_application.api import app, transactions_collection, postgre_conne
 from src.base_application.api.api_utils import validate_json, validate_member_json, validate_association_json, \
     validate_xml
 
+def to_xml(data):
+    """Converts dictionary data to an XML string."""
+    xml_data = json2xml.Json2xml(data).to_xml()
+    return xml_data
 
 @app.route("/")
 def index():
