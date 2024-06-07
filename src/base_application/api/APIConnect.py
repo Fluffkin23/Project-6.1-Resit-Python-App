@@ -139,14 +139,18 @@ def create_transaction():
 
 @app.route("/api/transactions", methods=["PUT"])
 def update_transaction():
+    """
+        This endpoint updates an existing transaction in the PostgreSQL database using a stored procedure.
+        Data for the transaction is obtained from the POST request form.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     try:
         cursor = postgre_connection.cursor()
-        # Get data from a post request
+        # Get data from a POST request
         transactionID = request.form.get('trans_id')
         description = request.form.get('desc')
         categoryID = request.form.get('category')
         memberID = request.form.get('member')
-        cursor = postgre_connection.cursor()
 
         if categoryID == "None":
             categoryID = None
@@ -161,11 +165,23 @@ def update_transaction():
         cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
             transactionID, description, categoryID, memberID))
 
-        return jsonify({'message': 'Transaction Updated'})
+        response_data = {'message': 'Transaction Updated'}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(xml_response, mimetype='application/xml', status=200)
+
+        return jsonify(response_data), 200
+
     except psycopg2.InterfaceError as error:
         error_message = str(error)
-        return jsonify({'error': error_message})
+        response_data = {'error': error_message}
 
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(xml_response, mimetype='application/xml', status=500)
+
+        return jsonify(response_data), 500
 
 @app.route("/api/transactions/filter", methods=["GET"])
 def filter_transactions():
