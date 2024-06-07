@@ -331,6 +331,20 @@ def get_file():
 
 @app.route("/api/associations", methods=["GET", "POST"])
 def handle_associations():
+    """
+        This endpoint handles GET and POST requests for associations:
+        - For GET requests:
+          - Fetches all associations from the database using a stored procedure `select_all_association()`.
+          - Returns the results in JSON format.
+        - For POST requests:
+          - Parses JSON data from the request body.
+          - Validates the JSON data (validation code is commented out).
+          - Extracts `accountID`, `name`, and `password` from the JSON data.
+          - Inserts a new association into the database using a stored procedure `insert_into_association()`.
+          - Commits the transaction and closes the cursor.
+          - Returns a success message in JSON format with a 200 status.
+        - If an error occurs during the POST request, returns an error message in JSON format.
+    """
     if request.method == "GET":
         # Fetch and return all associations
         cursor = postgre_connection.cursor()
@@ -365,54 +379,6 @@ def handle_associations():
         except (Exception, psycopg2.DatabaseError) as error:
             error_message = str(error)
             return jsonify({'error': error_message})
-
-
-@app.route("/api/members", methods=["GET", "POST"])
-def get_members():
-    if request.method == "GET":
-        try:
-            cursor = postgre_connection.cursor()
-            # call a stored procedure
-            cursor.execute('SELECT * FROM select_all_member()')
-
-            # Get all data from the stored procedure
-            data = cursor.fetchall()
-
-            # Return data in JSON format
-            return jsonify(data)
-        except psycopg2.InterfaceError as error:
-            error_message = str(error)
-            return jsonify({'error': error_message})
-    elif request.method == "POST":
-        try:
-            # Get the JSON data from the POST request
-            json_data = request.get_json()
-
-            # Validate with schema
-            if not validate_member_json(json_data):
-                return jsonify({'Error': 'Error Occurred'})
-
-            name = json_data['name']
-            email = json_data['email']
-
-            cursor = postgre_connection.cursor()
-
-            # call a stored procedure
-            cursor.execute('CALL insert_into_member(%s,%s)', (name, email))
-
-            # commit the transaction
-            postgre_connection.commit()
-
-            # close the cursor
-            cursor.close()
-
-            return jsonify({'message': 'Member saved successfully'})
-        except (Exception, psycopg2.DatabaseError) as error:
-            error_message = str(error)
-            return jsonify({'error': error_message})
-        except JSONDecodeError as error:
-            # Handle JSONDecodeError gracefully
-            return jsonify({'error': 'Invalid JSON format'})
 
 
 @app.route("/api/members/<member_id>", methods=["DELETE"])
