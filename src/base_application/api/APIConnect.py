@@ -122,9 +122,20 @@ def get_transactions_sql():
 
 @app.route("/api/transactions", methods=["POST"])
 def create_transaction():
+    """
+        This endpoint creates a new transaction in the database.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+    """
     json_data = request.get_json()
     transactions_collection.insert_one(json_data)
-    return jsonify({'message': 'Transaction created successfully'})
+
+    response_data = {'message': 'Transaction created successfully'}
+
+    if request.headers.get('Accept') == 'application/xml':
+        xml_response = json2xml.Json2xml(response_data).to_xml()
+        return Response(xml_response, mimetype='application/xml', status=201)
+
+    return jsonify(response_data), 201
 
 @app.route("/api/transactions", methods=["PUT"])
 def update_transaction():
