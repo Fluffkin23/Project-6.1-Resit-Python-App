@@ -15,10 +15,12 @@ from src.base_application.api import app, transactions_collection, postgre_conne
 from src.base_application.api.api_utils import validate_json, validate_member_json, validate_association_json, \
     validate_xml
 
+
 def to_xml(data):
     """Converts dictionary data to an XML string."""
     xml_data = json2xml.Json2xml(data).to_xml()
     return xml_data
+
 
 @app.route("/")
 def index():
@@ -99,7 +101,6 @@ def get_all_transactions():
     return Response(response=json_util.dumps(transactions_list), status=200, mimetype='application/json')
 
 
-
 @app.route("/api/transactions/sql", methods=["GET"])
 def get_transactions_sql():
     """
@@ -140,6 +141,7 @@ def create_transaction():
         return Response(xml_response, mimetype='application/xml', status=201)
 
     return jsonify(response_data), 201
+
 
 @app.route("/api/transactions", methods=["PUT"])
 def update_transaction():
@@ -186,6 +188,7 @@ def update_transaction():
             return Response(xml_response, mimetype='application/xml', status=500)
 
         return jsonify(response_data), 500
+
 
 @app.route("/api/transactions/filter", methods=["GET"])
 def filter_transactions():
@@ -241,6 +244,7 @@ def filter_transactions():
             mimetype='application/json'
         )
 
+
 @app.route("/api/transactions/search/<keyword>", methods=["GET"])
 def search_transactions(keyword):
     """
@@ -285,6 +289,7 @@ def search_transactions(keyword):
             )
         return jsonify(response_data), 500
 
+
 @app.route("/api/files/upload", methods=["POST"])
 def file_upload():
     """
@@ -298,7 +303,7 @@ def file_upload():
     file_data = request.json
 
     # Validate JSON
-    if not validate_json(file_data):  
+    if not validate_json(file_data):
         response_data = {'error': 'Invalid JSON format'}
         if request.headers.get('Accept') == 'application/xml':
             xml_response = json2xml.Json2xml(response_data).to_xml()
@@ -338,7 +343,7 @@ def get_file():
     try:
         # Fetch file metadata or contents from the database
         files_cursor = postgre_connection.cursor()
-        files_cursor.execute("SELECT * FROM select_all_file()") 
+        files_cursor.execute("SELECT * FROM select_all_file()")
         files = files_cursor.fetchall()
 
         # Prepare the response data
@@ -371,6 +376,7 @@ def get_file():
 
         # Default to JSON response
         return jsonify(response_data), 500
+
 
 @app.route("/api/associations", methods=["GET", "POST"])
 def handle_associations():
@@ -422,7 +428,6 @@ def handle_associations():
         except (Exception, psycopg2.DatabaseError) as error:
             error_message = str(error)
             return jsonify({'error': error_message})
-
 
 
 @app.route("/api/members", methods=["GET", "POST"])
@@ -557,24 +562,57 @@ def get_members():
             # Default to JSON response
             return jsonify(response_data), 400
 
+
 @app.route("/api/members/<member_id>", methods=["DELETE"])
 def delete_member(member_id):
+    """
+       This endpoint handles DELETE requests to remove a member by their ID:
+       - Calls a stored procedure `delete_member(member_id)` to delete the member from the database.
+       - Commits the transaction and closes the cursor.
+       - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 200 status.
+       - In case of a database error, returns a 500 status with an error message in the format specified by the 'Accept' header.
+   """
     try:
-        member_id = request.args.get('memberid')
         cursor = postgre_connection.cursor()
 
-        # call a stored procedure
+        # Call a stored procedure
         cursor.execute('CALL delete_member(%s)', (member_id,))
 
-        # commit the procedure
+        # Commit the procedure
         postgre_connection.commit()
 
-        # close the cursor
+        # Close the cursor
         cursor.close()
 
-        return jsonify({'message': 'Member removed'})
+        response_data = {'message': 'Member removed'}
+
+        # Check the Accept header to determine the response format
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=200,
+                mimetype='application/xml'
+            )
+
+        # Default to JSON response
+        return jsonify(response_data), 200
+
     except (Exception, psycopg2.DatabaseError) as error:
-        return jsonify({'message': str(error)})
+        error_message = str(error)
+        response_data = {'message': error_message}
+
+        # Check the Accept header to determine the response format
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = json2xml.Json2xml(response_data).to_xml()
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+
+        # Default to JSON response
+        return jsonify(response_data), 500
 
 
 @app.route("/api/categories", methods=["GET", "POST"])
@@ -646,6 +684,7 @@ def insert_category_into_database(category_name):
         if cursor:
             cursor.close()
             print("PostgreSQL cursor is closed")
+
 
 @app.route("/api/insertCategory", methods=["POST"])
 def insert_category():
@@ -742,6 +781,8 @@ def transaction_by_id(trans_id):
         except psycopg2.InterfaceError as error:
             error_message = str(error)
             return jsonify({'error': error_message})
+
+
 # Send a POST request with the file path to this function
 
 @app.route("/api/insertFile", methods=["POST"])
