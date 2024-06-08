@@ -784,24 +784,55 @@ def transaction_by_id_join(trans_id):
 
 @app.route("/api/transactions/<int:trans_id>", methods=["GET", "POST", "PUT"])
 def transaction_by_id(trans_id):
+    """
+        This endpoint handles GET, POST, and PUT requests for a specific transaction by its ID:
+        - For GET requests:
+          - Fetches the transaction details from the database using the `select_transaction_on_id` stored procedure.
+          - Returns the result in JSON format by default, or XML format if specified in the 'Accept' header.
+          - In case of a database interface error, returns a 500 status with an error message in the specified format.
+        - For POST and PUT requests:
+          - Parses JSON data from the request body to update a transaction.
+          - Extracts `description`, `categoryID`, and `memberID` from the JSON data.
+          - Converts `categoryID` and `memberID` to integers if they are not "None".
+          - Calls the `update_transaction` stored procedure to update the transaction in the database.
+          - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 200 status.
+          - In case of a database interface error, returns a 500 status with an error message in the specified format.
+    """
     if request.method == "GET":
         try:
             cursor = postgre_connection.cursor()
-
             cursor.execute('SELECT * FROM select_transaction_on_id(%s)', (int(trans_id),))
-
             data = cursor.fetchall()
+            response_data = data
 
-            return jsonify(data)
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=200,
+                    mimetype='application/xml'
+                )
+
+            return jsonify(response_data)
         except psycopg2.InterfaceError as error:
             error_message = str(error)
-            return jsonify({'error': error_message})
+            response_data = {'error': error_message}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 500
+
     elif request.method in ["POST", "PUT"]:
         try:
             # Get data from the request
-            description = request.json.get('desc')
-            categoryID = request.json.get('category')
-            memberID = request.json.get('member')
+            data = request.get_json()
+            description = data.get('desc')
+            categoryID = data.get('category')
+            memberID = data.get('member')
 
             cursor = postgre_connection.cursor()
 
@@ -812,10 +843,26 @@ def transaction_by_id(trans_id):
             cursor.execute('CALL update_transaction(%s,%s,%s,%s)', (
                 trans_id, description, categoryID, memberID))
 
-            return jsonify({'message': 'Transaction Updated'})
+            response_data = {'message': 'Transaction Updated'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=200,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data)
         except psycopg2.InterfaceError as error:
             error_message = str(error)
-            return jsonify({'error': error_message})
+            response_data = {'error': error_message}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 500
 
 
 # Send a POST request with the file path to this function
