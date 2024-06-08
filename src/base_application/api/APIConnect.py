@@ -617,15 +617,55 @@ def delete_member(member_id):
 
 @app.route("/api/categories", methods=["GET", "POST"])
 def handle_categories():
+    """
+        This endpoint handles GET and POST requests for categories:
+        - For GET requests:
+          - Fetches all categories from the 'category' table in the database.
+          - Returns the results in JSON format by default, or XML format if specified in the 'Accept' header, with a 200 status.
+          - In case of a database error, returns a 500 status with an error message in the format specified by the 'Accept' header.
+        - For POST requests:
+          - Extracts the 'name' field from the JSON data in the request body.
+          - Validates that the 'name' field is present. If not, returns a 400 status with an error message in the format specified by the 'Accept' header.
+          - Inserts a new category into the 'category' table in the database.
+          - Commits the transaction and closes the cursor.
+          - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+          - In case of a database error, rolls back the transaction and returns a 500 status with an error message in the format specified by the 'Accept' header.
+          - In case of other exceptions, returns a 500 status with an error message in the format specified by the 'Accept' header.
+    """
     if request.method == "GET":
         try:
             cursor = postgre_connection.cursor()
             cursor.execute("SELECT * FROM category")
             categories = cursor.fetchall()
             cursor.close()
-            return jsonify(categories), 200
+            response_data = categories
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=200,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data), 200
+
         except psycopg2.Error as e:
-            return jsonify({'error': 'Failed to fetch categories'}), 500
+            response_data = {'error': 'Failed to fetch categories'}
+
+            # Check the Accept header to determine the response format
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+
+            # Default to JSON response
+            return jsonify(response_data), 500
 
     elif request.method == "POST":
         try:
@@ -635,7 +675,15 @@ def handle_categories():
 
             # Validate category_name
             if not category_name:
-                return jsonify({'error': 'Category name is required'}), 400
+                response_data = {'error': 'Category name is required'}
+                if request.headers.get('Accept') == 'application/xml':
+                    xml_response = json2xml.Json2xml(response_data).to_xml()
+                    return Response(
+                        response=xml_response,
+                        status=400,
+                        mimetype='application/xml'
+                    )
+                return jsonify(response_data), 400
 
             # Attempt to insert the category into the database
             cursor = postgre_connection.cursor()
@@ -645,15 +693,39 @@ def handle_categories():
             cursor.close()
 
             # Return success message
-            return jsonify({'message': 'Category added successfully'}), 201
+            response_data = {'message': 'Category added successfully'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=201,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 201
 
         except psycopg2.Error as e:
             # Rollback the transaction in case of error
             postgre_connection.rollback()
-            return jsonify({'error': 'Failed to add category to the database'}), 500
+            response_data = {'error': 'Failed to add category to the database'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 500
 
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            response_data = {'error': str(e)}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = json2xml.Json2xml(response_data).to_xml()
+                return Response(
+                    response=xml_response,
+                    status=500,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 500
 
 
 @app.route("/api/insert_category_into_database", methods=["POST"])
