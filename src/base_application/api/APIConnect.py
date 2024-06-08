@@ -867,16 +867,35 @@ def transaction_by_id(trans_id):
 
 # Send a POST request with the file path to this function
 
+# we need
 @app.route("/api/insertFile", methods=["POST"])
 def insert_file():
+    """
+       This endpoint handles the insertion of a JSON file containing transaction details:
+       - Retrieves the JSON data from the POST request.
+       - Validates the JSON data using the `validate_json` function.
+         - If validation fails, returns a 400 status with an error message in JSON or XML format based on the 'Accept' header.
+       - Extracts necessary fields from the JSON data to insert into the `File` table.
+       - Calls the `insert_into_file` stored procedure to insert the data into the database.
+       - Commits the transaction and closes the cursor.
+       - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+       - In case of a database error, returns a 500 status with an error message in JSON or XML format based on the 'Accept' header.
+   """
     try:
         # Get the JSON file from the POST request
         json_transactions = request.get_json()
 
         # Validate JSON
         if not validate_json(json_transactions):
-            print("Validation failed")
-            return jsonify({'Error': 'Error Occured'})
+            response_data = {'Error': 'Validation failed'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=400,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 400
 
         # Extract values from a JSON into variables for the File table
         reference_number = str(json_transactions["transaction_reference"])
@@ -893,27 +912,64 @@ def insert_file():
             reference_number, statement_number, sequence_detail, available_balance, forward_available_balance,
             account_identification))
 
-        # commit the transaction
+        # Commit the transaction
         postgre_connection.commit()
 
-        # close the cursor
+        # Close the cursor
         cursor.close()
 
-        return jsonify({'message': 'File inserted successfully'})
+        response_data = {'message': 'File inserted successfully'}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=201,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 201
+
     except (Exception, psycopg2.DatabaseError) as error:
-        return jsonify({'message': error})
+        error_message = str(error)
+        response_data = {'message': error_message}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 500
 
 
+# this we need
 @app.route("/api/insertTransaction", methods=["POST"])
 def insert_transaction():
+    """
+       This endpoint handles the insertion of transactions from a JSON file:
+       - Retrieves the JSON data from the POST request.
+       - Validates the JSON data using the `validate_json` function.
+         - If validation fails, returns a 400 status with an error message in JSON or XML format based on the 'Accept' header.
+       - Extracts necessary fields from the JSON data to insert into the `Transaction` table.
+       - Iterates over each transaction in the JSON data and calls the `insert_into_transaction` stored procedure to insert the data into the database.
+       - Commits each transaction and closes the cursor after all insertions.
+       - Returns a success message in JSON format by default, or XML format if specified in the 'Accept' header, with a 201 status.
+       - In case of a database error, returns a 500 status with an error message in JSON or XML format based on the 'Accept' header.
+   """
     try:
         # Get the JSON file from the POST request
         json_trans = request.get_json()
 
         # Validate JSON
         if not validate_json(json_trans):
-            print("Validation failed")
-            return jsonify({'Error': 'Error Occured'})
+            response_data = {'Error': 'Validation failed'}
+            if request.headers.get('Accept') == 'application/xml':
+                xml_response = to_xml(response_data)
+                return Response(
+                    response=xml_response,
+                    status=400,
+                    mimetype='application/xml'
+                )
+            return jsonify(response_data), 400
 
         bank_reference = str(json_trans["transaction_reference"])
 
@@ -923,8 +979,7 @@ def insert_transaction():
             amount = trans_set["amount"]["amount"]
             currency = trans_set["amount"]["currency"]
             transaction_date = trans_set["date"]
-            transaction_details = str(trans_set["transaction_details"])
-            transaction_details = transaction_details.replace("/", "-")
+            transaction_details = str(trans_set["transaction_details"]).replace("/", "-")
             description = None
             typetransaction = trans_set["status"]
 
@@ -937,7 +992,24 @@ def insert_transaction():
         # close the cursor
         cursor.close()
 
-        return jsonify({'message': 'File inserted successfully'})
+        response_data = {'message': 'File inserted successfully'}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=201,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 201
+
     except (Exception, psycopg2.DatabaseError) as error:
         error_message = str(error)
-        return jsonify({'error': error_message})
+        response_data = {'error': error_message}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+        return jsonify(response_data), 500
