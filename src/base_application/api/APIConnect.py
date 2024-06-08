@@ -764,6 +764,12 @@ def download_data():
 
 @app.route("/api/transactions/join/<int:trans_id>", methods=["GET"])
 def transaction_by_id_join(trans_id):
+    """
+        This endpoint retrieves transaction details along with joined information from the database based on the transaction ID:
+        - It queries the `full_join_view` view to get the transaction details where the `transactionid` matches the provided `trans_id`.
+        - Returns the result in JSON format.
+        - In case of a database interface error, returns a 500 status with an error message in JSON format.
+    """
     try:
         cursor = postgre_connection.cursor()
 
@@ -775,7 +781,6 @@ def transaction_by_id_join(trans_id):
     except psycopg2.InterfaceError as error:
         error_message = str(error)
         return jsonify({'error': error_message})
-
 
 @app.route("/api/transactions/<int:trans_id>", methods=["GET", "POST", "PUT"])
 def transaction_by_id(trans_id):
