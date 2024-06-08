@@ -727,82 +727,40 @@ def handle_categories():
                 )
             return jsonify(response_data), 500
 
+# Update the /api/downloads endpoint to filter transactions based on date and return the correct format
+@app.route("/api/downloads", methods=["GET"])
+def download_data():
+    """
+       This endpoint allows downloading transactions filtered by a date range:
+       - The date range is specified using 'start_date' and 'end_date' query parameters.
+       - Filters transactions based on the specified date range.
+       - Returns the transactions in JSON format by default, or XML format if specified in the 'Accept' header, as an attachment.
+       - The filename of the attachment is 'transactions.json' for JSON responses and 'transactions.xml' for XML responses.
+   """
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
-@app.route("/api/insert_category_into_database", methods=["POST"])
-def insert_category_into_database(category_name):
-    try:
-        # Creating a cursor object using the cursor() method
-        cursor = postgre_connection.cursor()
-        # SQL statement for inserting a category into the Category table
-        sql_insert_category = "INSERT INTO Category (name) VALUES (%s)"
+    query = {}
+    if start_date and end_date:
+        query["transactions.date"] = {"$gte": start_date, "$lte": end_date}
 
-        # Execute the SQL statement with the category name as parameter
-        cursor.execute(sql_insert_category, (category_name,))
-
-        # Commit the transaction
-        postgre_connection.commit()
-
-        # Return True to indicate successful insertion
-        return True
-    except psycopg2.Error as e:
-        # Print the error message
-        print("Error inserting category:", e)
-        # Rollback the transaction in case of error
-        postgre_connection.rollback()
-        # Return False to indicate failure
-        return False
-    finally:
-        # Close the cursor if it was successfully opened
-        if cursor:
-            cursor.close()
-            print("PostgreSQL cursor is closed")
-
-
-@app.route("/api/insertCategory", methods=["POST"])
-def insert_category():
-    try:
-        # Get the category name from the POST request
-        category_name = request.json.get('name')
-
-        cursor = postgre_connection.cursor()
-
-        # Call a stored procedure to insert a category into the Category table
-        cursor.execute("CALL insert_into_category(%s)", (category_name,))
-
-        # Commit the transaction
-        postgre_connection.commit()
-
-        # Return success message
-        return jsonify({'message': 'Category added successfully'}), 201
-    except (Exception, psycopg2.Error) as error:
-        # Rollback the transaction in case of error
-        postgre_connection.rollback()
-        return jsonify({'error': str(error)}), 500
-
-
-@app.route("/api/downloads/json", methods=["GET"])
-def download_json():
-    transactions_cursor = transactions_collection.find()
+    transactions_cursor = transactions_collection.find(query)
     transactions_list = list(transactions_cursor)
-    json_data = json_util.dumps(transactions_list, indent=4)
-    response = make_response(json_data)
-    response.headers['Content-Type'] = 'application/json'
-    response.headers['Content-Disposition'] = 'attachment; filename=transactions.json'
+
+    if request.headers.get('Accept') == 'application/xml':
+        json_data = json_util.dumps(transactions_list)
+        data_dict = json.loads(json_data)
+        xml_data = json2xml.Json2xml(data_dict).to_xml()
+        response = make_response(xml_data)
+        response.headers['Content-Type'] = 'application/xml'
+        response.headers['Content-Disposition'] = 'attachment; filename=transactions.xml'
+    else:
+        json_data = json_util.dumps(transactions_list, indent=4)
+        response = make_response(json_data)
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Content-Disposition'] = 'attachment; filename=transactions.json'
+
     return response
-
-
-@app.route("/api/downloads/xml", methods=["GET"])
-def download_xml():
-    transactions_cursor = transactions_collection.find()
-    transactions_list = list(transactions_cursor)
-    json_data = json_util.dumps(transactions_list)
-    data_dict = json.loads(json_data)
-    xml_data = json2xml.Json2xml(data_dict).to_xml()
-    response = make_response(xml_data)
-    response.headers["Content-Type"] = "application/xml"
-    response.headers["Content-Disposition"] = 'attachment; filename=transactions.xml'
-    return response
-
 
 @app.route("/api/transactions/join/<int:trans_id>", methods=["GET"])
 def transaction_by_id_join(trans_id):
