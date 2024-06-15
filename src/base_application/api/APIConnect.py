@@ -300,7 +300,7 @@ def file_upload():
         - A success message is returned with a 201 status if the insertion is successful.
         - The response format (XML or JSON) is determined by the 'Accept' header in the request.
     """
-    file_data = request.json
+    file_data = request.get_json()
 
     # Validate JSON
     if not validate_json(file_data):

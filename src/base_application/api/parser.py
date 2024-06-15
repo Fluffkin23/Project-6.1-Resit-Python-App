@@ -45,10 +45,14 @@ class FileWatcher:
         # Placeholder: Adjust payload and headers as needed for your specific API
         with open(file_path, 'rb') as file:
             if check_mt940_file(file_path):
-                url = url = api_server_ip + '/api/uploadFile'
+                url = url = api_server_ip + '/api/files/upload'
                 json_data = parse_mt940_file(file_path)
                 headers = {'Content-Type': 'application/json'}
                 response = requests.post(url, json=json_data, headers=headers)
+                if response.status_code == 201:
+                    print('File uploaded successfully')
+                else:
+                    print('Failed to upload file:', response.json())
 
                 # Save to SQL DB FILE
                 url = api_server_ip + '/api/insertFile'
