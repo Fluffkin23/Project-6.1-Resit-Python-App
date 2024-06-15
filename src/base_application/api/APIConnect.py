@@ -5,6 +5,7 @@ from datetime import datetime
 from json import JSONDecodeError
 
 import psycopg2
+import pymongo
 from flask import jsonify, request, make_response, Flask, Response
 from json2xml import json2xml
 from bson import json_util, ObjectId
@@ -76,53 +77,80 @@ def test_api():
 @app.route("/api/transactions/count", methods=["GET"])
 def get_transactions_count():
     """
-       This endpoint returns the count of transactions in the database.
-       If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
-   """
-    count = transactions_collection.count_documents({})
-    response_data = {"transactionsCount": count}
-    if request.headers.get('Accept') == 'application/xml':
-        xml_response = to_xml(response_data)
-        return Response(xml_response, mimetype='application/xml')
-    return jsonify(response_data)
+        This endpoint returns the count of transactions in the database.
+        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+        """
+    try:
+        count = transactions_collection.count_documents({})
+        response_data = {"transactionsCount": count}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, mimetype='application/xml')
+        return jsonify(response_data)
+    except Exception as e:
+        error_message = str(e)
+        response_data = {"error": error_message}
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, status=500, mimetype='application/xml')
+        return jsonify(response_data), 500
 
 
 @app.route("/api/transactions", methods=["GET"])
 def get_all_transactions():
     """
-        This endpoint retrieves all transactions from the database.
-        If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
-    """
-    transactions_cursor = transactions_collection.find()
-    transactions_list = list(transactions_cursor)
-    if request.headers.get('Accept') == 'application/xml':
-        xml_response = to_xml(transactions_list)
-        return Response(xml_response, mimetype='application/xml')
-    return Response(response=json_util.dumps(transactions_list), status=200, mimetype='application/json')
+       This endpoint retrieves all transactions from the database.
+       If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
+       """
+    try:
+        transactions_cursor = transactions_collection.find()
+        transactions_list = list(transactions_cursor)
 
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(transactions_list)
+            return Response(xml_response, mimetype='application/xml')
+
+        return Response(response=json_util.dumps(transactions_list), status=200, mimetype='application/json')
+
+    except Exception as e:
+        error_message = str(e)
+        response_data = {"error": error_message}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, status=500, mimetype='application/xml')
+
+        return jsonify(response_data), 500
 
 @app.route("/api/transactions/sql", methods=["GET"])
 def get_transactions_sql():
     """
         This endpoint retrieves all transactions from a PostgreSQL database using a stored procedure.
         If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
-    """
+        """
     try:
         cursor = postgre_connection.cursor()
         cursor.execute('SELECT * FROM select_all_transaction()')
         data = cursor.fetchall()
-        cursor.close()  # Close cursor
-        postgre_connection.commit()  # Commit to ensure the transaction is not left open
+        cursor.close()
+        postgre_connection.commit()
 
         if request.headers.get('Accept') == 'application/xml':
             xml_response = to_xml(data)
             return Response(xml_response, mimetype='application/xml')
 
         return jsonify(data)
-    except psycopg2.InterfaceError as error:
-        postgre_connection.rollback()  # Rollback in case of error
+
+    except (psycopg2.InterfaceError, psycopg2.DatabaseError) as error:
+        postgre_connection.rollback()
         error_message = str(error)
-        return jsonify({'error': error_message}), 500
+        response_data = {'error': error_message}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, status=500, mimetype='application/xml')
+
+        return jsonify(response_data), 500
 
 
 @app.route("/api/transactions", methods=["POST"])
@@ -130,17 +158,41 @@ def create_transaction():
     """
         This endpoint creates a new transaction in the database.
         If the request's 'Accept' header is 'application/xml', the response is in XML format, otherwise, it is in JSON format.
-    """
-    json_data = request.get_json()
-    transactions_collection.insert_one(json_data)
+        """
+    try:
+        json_data = request.get_json()
 
-    response_data = {'message': 'Transaction created successfully'}
+        if not json_data:
+            raise ValueError("Invalid JSON data")
 
-    if request.headers.get('Accept') == 'application/xml':
-        xml_response = json2xml.Json2xml(response_data).to_xml()
-        return Response(xml_response, mimetype='application/xml', status=201)
+        transactions_collection.insert_one(json_data)
+        response_data = {'message': 'Transaction created successfully'}
 
-    return jsonify(response_data), 201
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, mimetype='application/xml', status=201)
+
+        return jsonify(response_data), 201
+
+    except ValueError as ve:
+        error_message = str(ve)
+        response_data = {'error': error_message}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, mimetype='application/xml', status=400)
+
+        return jsonify(response_data), 400
+
+    except pymongo.errors.PyMongoError as e:
+        error_message = str(e)
+        response_data = {'error': error_message}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(xml_response, mimetype='application/xml', status=500)
+
+        return jsonify(response_data), 500
 
 
 @app.route("/api/transactions", methods=["PUT"])
@@ -299,14 +351,33 @@ def file_upload():
         - If the JSON is valid, it is inserted into the transactions_collection in the database.
         - A success message is returned with a 201 status if the insertion is successful.
         - The response format (XML or JSON) is determined by the 'Accept' header in the request.
-    """
-    file_data = request.get_json()
+        """
+    try:
+        file_data = request.get_json()
 
-    # Validate JSON
-    if not validate_json(file_data):
-        response_data = {'error': 'Invalid JSON format'}
+        # Validate JSON
+        if not validate_json(file_data):
+            raise ValueError("Invalid JSON format")
+
+        transactions_collection.insert_one(file_data)
+        response_data = {'message': 'File uploaded successfully'}
+
         if request.headers.get('Accept') == 'application/xml':
-            xml_response = json2xml.Json2xml(response_data).to_xml()
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=201,
+                mimetype='application/xml'
+            )
+
+        return jsonify(response_data), 201
+
+    except ValueError as ve:
+        error_message = str(ve)
+        response_data = {'error': error_message}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
             return Response(
                 response=xml_response,
                 status=400,
@@ -314,18 +385,19 @@ def file_upload():
             )
         return jsonify(response_data), 400
 
-    transactions_collection.insert_one(file_data)
-    response_data = {'message': 'File uploaded successfully'}
+    except pymongo.errors.PyMongoError as e:
+        error_message = str(e)
+        response_data = {'error': error_message}
 
-    if request.headers.get('Accept') == 'application/xml':
-        xml_response = json2xml.Json2xml(response_data).to_xml()
-        return Response(
-            response=xml_response,
-            status=201,
-            mimetype='application/xml'
-        )
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
 
-    return jsonify(response_data), 201
+        return jsonify(response_data), 500
 
 
 @app.route("/api/files", methods=["GET"])
