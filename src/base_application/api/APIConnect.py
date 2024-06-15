@@ -453,19 +453,19 @@ def get_file():
 @app.route("/api/associations", methods=["GET", "POST"])
 def handle_associations():
     """
-        This endpoint handles GET and POST requests for associations:
-        - For GET requests:
-          - Fetches all associations from the database using a stored procedure `select_all_association()`.
-          - Returns the results in JSON format.
-        - For POST requests:
-          - Parses JSON data from the request body.
-          - Validates the JSON data (validation code is commented out).
-          - Extracts `accountID`, `name`, and `password` from the JSON data.
-          - Inserts a new association into the database using a stored procedure `insert_into_association()`.
-          - Commits the transaction and closes the cursor.
-          - Returns a success message in JSON format with a 200 status.
-        - If an error occurs during the POST request, returns an error message in JSON format.
-    """
+           This endpoint handles GET and POST requests for associations:
+           - For GET requests:
+             - Fetches all associations from the database using a stored procedure `select_all_association()`.
+             - Returns the results in JSON format.
+           - For POST requests:
+             - Parses JSON data from the request body.
+             - Validates the JSON data (validation code is commented out).
+             - Extracts `accountID`, `name`, and `password` from the JSON data.
+             - Inserts a new association into the database using a stored procedure `insert_into_association()`.
+             - Commits the transaction and closes the cursor.
+             - Returns a success message in JSON format with a 200 status.
+           - If an error occurs during the POST request, returns an error message in JSON format.
+       """
     if request.method == "GET":
         # Fetch and return all associations
         cursor = postgre_connection.cursor()
@@ -803,36 +803,51 @@ def handle_categories():
 @app.route("/api/downloads", methods=["GET"])
 def download_data():
     """
-       This endpoint allows downloading transactions filtered by a date range:
-       - The date range is specified using 'start_date' and 'end_date' query parameters.
-       - Filters transactions based on the specified date range.
-       - Returns the transactions in JSON format by default, or XML format if specified in the 'Accept' header, as an attachment.
-       - The filename of the attachment is 'transactions.json' for JSON responses and 'transactions.xml' for XML responses.
-   """
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+        This endpoint allows downloading transactions filtered by a date range:
+        - The date range is specified using 'start_date' and 'end_date' query parameters.
+        - Filters transactions based on the specified date range.
+        - Returns the transactions in JSON format by default, or XML format if specified in the 'Accept' header, as an attachment.
+        - The filename of the attachment is 'transactions.json' for JSON responses and 'transactions.xml' for XML responses.
+        """
+    try:
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
 
-    query = {}
-    if start_date and end_date:
-        query["transactions.date"] = {"$gte": start_date, "$lte": end_date}
+        query = {}
+        if start_date and end_date:
+            query["transactions.date"] = {"$gte": start_date, "$lte": end_date}
 
-    transactions_cursor = transactions_collection.find(query)
-    transactions_list = list(transactions_cursor)
+        transactions_cursor = transactions_collection.find(query)
+        transactions_list = list(transactions_cursor)
 
-    if request.headers.get('Accept') == 'application/xml':
-        json_data = json_util.dumps(transactions_list)
-        data_dict = json.loads(json_data)
-        xml_data = json2xml.Json2xml(data_dict).to_xml()
-        response = make_response(xml_data)
-        response.headers['Content-Type'] = 'application/xml'
-        response.headers['Content-Disposition'] = 'attachment; filename=transactions.xml'
-    else:
-        json_data = json_util.dumps(transactions_list, indent=4)
-        response = make_response(json_data)
-        response.headers['Content-Type'] = 'application/json'
-        response.headers['Content-Disposition'] = 'attachment; filename=transactions.json'
+        if request.headers.get('Accept') == 'application/xml':
+            json_data = json_util.dumps(transactions_list)
+            data_dict = json.loads(json_data)
+            xml_data = to_xml(data_dict)
+            response = make_response(xml_data)
+            response.headers['Content-Type'] = 'application/xml'
+            response.headers['Content-Disposition'] = 'attachment; filename=transactions.xml'
+        else:
+            json_data = json_util.dumps(transactions_list, indent=4)
+            response = make_response(json_data)
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['Content-Disposition'] = 'attachment; filename=transactions.json'
 
-    return response
+        return response
+
+    except Exception as error:
+        error_message = str(error)
+        response_data = {'error': 'Internal Server Error: ' + error_message}
+
+        if request.headers.get('Accept') == 'application/xml':
+            xml_response = to_xml(response_data)
+            return Response(
+                response=xml_response,
+                status=500,
+                mimetype='application/xml'
+            )
+
+        return jsonify(response_data), 500
 
 @app.route("/api/transactions/join/<int:trans_id>", methods=["GET"])
 def transaction_by_id_join(trans_id):
